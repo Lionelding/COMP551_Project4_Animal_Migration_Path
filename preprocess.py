@@ -140,13 +140,16 @@ class Data(object):
         return retval
 
 def load_pickle(name):
-    name = 'preprocessed_data/' + name
     with open(name, 'rb') as f:
         p = pickle.load(f)
     return p
 
 def save_pickle(name, content):
-    name = 'preprocessed_data/' + name
+    if '.pkl' not in name:
+        name = 'preprocessed_data/' + name + '.pkl'
+    else:
+        name = name = 'preprocessed_data/' + name
+    print('saving data as %s' % name)
     with open(name, 'wb') as f:
         pickle.dump(content, f)
 
@@ -158,7 +161,6 @@ def preprocess(source_name, dest_name, cols, organize=True):
     data = Data(data_by_year, data_by_individual)
     # save it to disk
     save_pickle(dest_name, data)
-    print('saved data to disk')
 
 def load(fname):
     '''returns a pre-pickled Data object'''
