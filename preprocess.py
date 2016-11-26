@@ -10,7 +10,7 @@ import cPickle as pickle
 ''' Struture
 {
     year: {
-        animal_id: [data points],
+        individual_id: [data points],
         ...
     },
     ...
@@ -108,6 +108,9 @@ class Data(object):
     def __init__(self, data_by_year, data_by_individual):
         self.data_by_year = data_by_year
         self.data_by_individual = data_by_individual
+
+    def get_data(self):
+        return self.get_data_by_year, self.get_data_by_individual
 
     def get_year(year):
         '''returns the data for all the individuals for a single year'''
