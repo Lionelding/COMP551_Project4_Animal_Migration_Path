@@ -6,6 +6,8 @@ import csv
 import sys
 import numpy as np
 import cPickle as pickle
+import time
+import datetime
 
 ''' Struture
 {
@@ -22,9 +24,33 @@ def get_col_index(col_titles, title):
             return i
     return -1
 
-def read_data(fname, cols, organize):
-    '''if organize=false, returns an array containing the data in the given cols of the file
+def get_unix_ts(ts_str):
+    '''converts a string timestamp to a unix timestamp'''
+    month_str, day_str, rest = s.split('/')
+    year_str, rest = rest.split('  ')
+    time, am_pm = rest.split(' ')
+    hour_str, minute_str, second_str = time.split(':')
+
+    day = int(day_str)
+    month = int(month_str)
+    year = int(year_str)
+    hour = int(hour_str)
+    minute = int(minute_str)
+    second = int(second_str)
+
+    if am_pm == 'PM' and hour != 12:
+        hour += 12
+    else if am_pm == 'AM' and hour == 12:
+        hour == 0
+
+    dt = datetime(year, month, day, hour, minute, second)
+
+    return int(time.mktime(dt.timetuple()))
+
+def read_data(fname, organize):
+    '''if organize=false, returns an array containing (lat, lon, time) datapoints
     else returns a dictionary with the above structure'''
+    '''
     if not organize:
         data = []
         with open(fname, 'rb') as csvfile:
@@ -44,62 +70,70 @@ def read_data(fname, cols, organize):
                     feature_vec.append(feat_val)
                 data.append(feature_vec)
         return data
-    else:
-        data_by_year = {}
-        data_by_individual = {}
-        with open(fname, 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',')
-            # get the timestamp and individual-local-identifier columns
-            col_titles = reader.next()
-            timestamp_col = get_col_index(col_titles, 'timestamp')
-            if timestamp_col == -1:
-                print('Could not find column `timestamp`')
+    '''
+    data_by_year = {}
+    data_by_individual = {}
+    with open(fname, 'rb') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        # get the timestamp and individual-local-identifier columns
+        col_titles = reader.next()
+        timestamp_col = get_col_index(col_titles, 'timestamp')
+        if timestamp_col == -1:
+            print('Could not find column `timestamp`')
+            sys.exit(1)
+        ili_col = get_col_index(col_titles, 'individual-local-identifier')
+        if ili_col == -1:
+            print('Could not find column `individual-local-identifier`')
+            sys.exit(1)
+        lat_col = get_col_index(col_titles, 'location-lat')
+        lon_col = get_col_index(col_titles, 'location-lon')
+        # iterate row by row and create the data object
+        for row in reader:
+            # get the year
+            timestamp = row[timestamp_col]
+            try:
+                year = int(timestamp.split('-')[0])
+            except ValueError:
+                print('Unable to cast year to an integer')
                 sys.exit(1)
-            ili_col = get_col_index(col_titles, 'individual-local-identifier')
-            if ili_col == -1:
-                print('Could not find column `individual-local-identifier`')
-                sys.exit(1)
-            # iterate row by row and create the data object
-            for row in reader:
-                # get the year
-                timestamp = row[timestamp_col]
+
+            # get the individual
+            individual = row[ili_col]
+
+            if year not in data_by_year:
+                data_by_year[year] = {}
+
+            if individual not in data_by_year[year]:
+                data_by_year[year][individual] = []
+
+            if individual not in data_by_individual:
+                data_by_individual[individual] = {}
+
+            if year not in data_by_individual:
+                data_by_individual[individual][year] = []
+
+            # get the data
+            lat = float(row[lat_col)
+            lon = float(row[lon_col])
+            # convert the timestamp string into a utc timestamp
+            time = get_utc_ts(timestamp)
+
+            feature_vec = [lat, lon, time]
+
+            data_by_year[year][individual].append(feature_vec)
+            data_by_individual[individual][year].append(feature_vec)
+            '''
+            for col in cols:
+                feat_val = row[col]
+                # attempt to cast feat_val to a float
                 try:
-                    year = int(timestamp.split('-')[0])
+                    feat_val = float(feat_val)
                 except ValueError:
-                    print('Unable to cast year to an integer')
+                    print('unable to cast feature to float')
                     sys.exit(1)
-
-                # get the individual
-                individual = row[ili_col]
-
-                if year not in data_by_year:
-                    data_by_year[year] = {}
-
-                if individual not in data_by_year[year]:
-                    data_by_year[year][individual] = []
-
-                if individual not in data_by_individual:
-                    data_by_individual[individual] = {}
-
-                if year not in data_by_individual:
-                    data_by_individual[individual][year] = []
-
-                # get the data
-                feature_vec = []
-                for col in cols:
-                    feat_val = row[col]
-                    # attempt to cast feat_val to a float
-                    try:
-                        feat_val = float(feat_val)
-                    except ValueError:
-                        print('unable to cast feature to float')
-                        sys.exit(1)
-                    feature_vec.append(feat_val)
-
-                data_by_year[year][individual].append(feature_vec)
-                data_by_individual[individual][year].append(feature_vec)
-
-            return data_by_year, data_by_individual
+                feature_vec.append(feat_val)
+            '''
+        return data_by_year, data_by_individual
 
 # Note: this is a pretty inefficient data structure - stores the same data twice
 class Data(object):

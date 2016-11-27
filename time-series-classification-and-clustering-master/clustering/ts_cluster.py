@@ -57,7 +57,6 @@ class TsCluster(object):
                     sys.exit(1)
                 self.centroids[key]=[m/len(self.assignments[key]) for m in clust_sum]
 
-
     def get_centroids(self):
         return self.centroids
 
