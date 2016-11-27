@@ -44,3 +44,14 @@ def extend_ts(ts, time_set, times):
 # determine all the times within this window across all timeseries
 # for each time in this window, if a time series does not already have a measurement at
 #   this time, then interpolate one and add it to the time series
+
+# given a list of time series, find the latest start time and earliest end time
+def get_time_limits(tss):
+    pass
+    # TODO
+
+
+# given a list of time series, truncate them based on latest start time and earliest end time
+def trucate_time_series(tss):
+    start, end = get_time_limits(tss)
+    # TODO

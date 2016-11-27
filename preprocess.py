@@ -47,7 +47,7 @@ def get_unix_ts(ts_str):
 
     return int(time.mktime(dt.timetuple()))
 
-def read_data(fname, organize):
+def read_data(fname):
     '''if organize=false, returns an array containing (lat, lon, time) datapoints
     else returns a dictionary with the above structure'''
     '''
@@ -190,10 +190,10 @@ def save_pickle(name, content):
     with open(name, 'wb') as f:
         pickle.dump(content, f)
 
-def preprocess(source_name, dest_name, cols, organize=True):
+def preprocess(source_name, dest_name):
     '''creates a Data object from csv'''
     # get the data
-    data_by_year, data_by_individual = read_data(source_name, cols, organize)
+    data_by_year, data_by_individual = read_data(source_name)
     # wrap the data in an object
     data = Data(data_by_year, data_by_individual)
     # save it to disk
