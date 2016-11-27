@@ -25,11 +25,12 @@ def get_col_index(col_titles, title):
     return -1
 
 def get_unix_ts(ts_str):
-    '''converts a string timestamp to a unix timestamp'''
-    month_str, day_str, rest = s.split('/')
-    year_str, rest = rest.split('  ')
-    time, am_pm = rest.split(' ')
-    hour_str, minute_str, second_str = time.split(':')
+    '''converts a string timestamp to a unix timestamp
+    string format: 2015-06-19 12:34:42.000'''
+    year_str, month_str, rest = ts_str.split('-')
+    day_str, rest = rest.split(' ')
+    clock_time, milliseconds = rest.split('.')
+    hour_str, minute_str, second_str = clock_time.split(':')
 
     day = int(day_str)
     month = int(month_str)
@@ -38,14 +39,9 @@ def get_unix_ts(ts_str):
     minute = int(minute_str)
     second = int(second_str)
 
-    if am_pm == 'PM' and hour != 12:
-        hour += 12
-    else if am_pm == 'AM' and hour == 12:
-        hour == 0
+    dt = datetime.datetime(year, month, day, hour, minute, second)
 
-    dt = datetime(year, month, day, hour, minute, second)
-
-    return int(time.mktime(dt.timetuple()))
+    return time.mktime(dt.timetuple())
 
 def read_data(fname):
     '''if organize=false, returns an array containing (lat, lon, time) datapoints
@@ -86,7 +82,7 @@ def read_data(fname):
             print('Could not find column `individual-local-identifier`')
             sys.exit(1)
         lat_col = get_col_index(col_titles, 'location-lat')
-        lon_col = get_col_index(col_titles, 'location-lon')
+        lon_col = get_col_index(col_titles, 'location-long')
         # iterate row by row and create the data object
         for row in reader:
             # get the year
@@ -113,10 +109,10 @@ def read_data(fname):
                 data_by_individual[individual][year] = []
 
             # get the data
-            lat = float(row[lat_col)
+            lat = float(row[lat_col])
             lon = float(row[lon_col])
             # convert the timestamp string into a utc timestamp
-            time = get_utc_ts(timestamp)
+            time = get_unix_ts(timestamp)
 
             feature_vec = [lat, lon, time]
 

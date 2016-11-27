@@ -1,4 +1,5 @@
-'''example of preprocessing data'''
+'''preprocessing data
+To preprocess a csv, just run `python name_of_csv.csv output_pickle_name.pkl`'''
 from __future__ import print_function
 
 import logging
