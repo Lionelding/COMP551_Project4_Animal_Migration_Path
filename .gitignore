@@ -1,4 +1,5 @@
 env/
 data/
+preprocessed_data/
 *.pyc
 dtw-1.0/
