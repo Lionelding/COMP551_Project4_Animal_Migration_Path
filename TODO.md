@@ -8,21 +8,17 @@
     A: in general, no
 [x] Does DTW require that each time series have measurements taken at the same times?
     A: No, doesn't actually care about times or time interval between points
-[ ] Implement interpolation
+[x] Implement interpolation
 [ ] Replace custom keogh and dtw in clustering alg with python dtw implementations
 
-## - Preprocessing TODOS
-[ ] handle this based on above research
-[ ] group by year
 
 ## Notes
 
-## Sites
+### Sites
 Similarity Measures
 http://stats.stackexchange.com/questions/27861/similarity-measures-between-curves
 Clustering and classification examples
 https://github.com/alexminnaar/time-series-classification-and-clustering
-
 Procrustes - similar to dtw in that it will align curves
 https://docs.scipy.org/doc/scipy-0.16.1/reference/generated/scipy.spatial.procrustes.html
 

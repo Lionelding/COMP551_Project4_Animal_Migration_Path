@@ -26,10 +26,13 @@ def get_col_index(col_titles, title):
 
 def get_unix_ts(ts_str):
     '''converts a string timestamp to a unix timestamp
-    string format: 2015-06-19 12:34:42.000'''
+    string format: 2015-06-19 12:34:42.000 or 2001-07-31 2:37:41'''
     year_str, month_str, rest = ts_str.split('-')
     day_str, rest = rest.split(' ')
-    clock_time, milliseconds = rest.split('.')
+    if '.' in rest:
+        clock_time, milliseconds = rest.split('.')
+    else:
+        clock_time = rest
     hour_str, minute_str, second_str = clock_time.split(':')
 
     day = int(day_str)

@@ -6,9 +6,17 @@ import matplotlib.pylab as plt
 import random
 import sys
 sys.path.append('./clustering/')
-from ts_cluster import TsCluster
+from ts_cluster0 import TsCluster
+from numpy.linalg import norm
 
 from preprocess import load
+from interpolation import normalize_time_series
+
+def norm1(a, b):
+    return norm(a - b, ord=1)
+
+def norm2(a, b):
+    return norm(a - b, ord=2)
 
 if __name__ == '__main__':
 
@@ -20,23 +28,33 @@ if __name__ == '__main__':
     print(year)
     print('num individuals for the year')
     print(len(indivs))
+    print()
 
-    data = []
+    tss = []
     for indiv_id, pts in indivs:
-        data.append(pts)
+        tss.append(pts)
 
-    data = np.array(data)
+    # normalize the series
+    normd_tss = normalize_time_series(tss)
 
-    print('Shape data')
-    print(data.shape)
+    print('Shape of normalized data')
+    print(normd_tss.shape)
+    print()
 
-    print(data[0])
-    print(data[0].shape)
-    print(data[1].shape)
+    # extract just the lat and lon coordinates
+    ptss = []
+    for pts in normd_tss:
+        ptss.append([pt[:2] for pt in pts])
 
-    clusterer = TsCluster(4)
+    ptss = np.array(ptss)
 
-    clusterer.k_means_clust(data,4,10,4)
+    print('Shape of data without time')
+    print(ptss.shape)
+    print()
+
+    clusterer = TsCluster(4, norm1)
+
+    clusterer.k_means_clust(ptss, 4, progress=True)
 
     centroids = clusterer.get_centroids()
 
