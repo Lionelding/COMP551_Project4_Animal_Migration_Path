@@ -6,17 +6,11 @@ import matplotlib.pylab as plt
 import random
 import sys
 sys.path.append('./clustering/')
-from ts_cluster0 import TsCluster
+from ts_cluster1 import TsCluster
 from numpy.linalg import norm
 
 from preprocess import load
 from interpolation import normalize_time_series
-
-def norm1(a, b):
-    return norm(a - b, ord=1)
-
-def norm2(a, b):
-    return norm(a - b, ord=2)
 
 if __name__ == '__main__':
 
@@ -52,7 +46,7 @@ if __name__ == '__main__':
     print(ptss.shape)
     print()
 
-    clusterer = TsCluster(4, norm1)
+    clusterer = TsCluster(4)
 
     clusterer.k_means_clust(ptss, 4, progress=True)
 

@@ -1,6 +1,11 @@
+'''uses dtw package DTW implementation'''
 import matplotlib.pylab as plt
 import numpy as np
 import random
+import sys
+sys.path.append('/Users/kstricks/Documents/McGill/4thyear/first_term/551/assignments/4/repo/pydtw')
+import libdtw as dtw
+from numpy.linalg import norm
 
 class TsCluster(object):
     def __init__(self, num_clust):
@@ -14,7 +19,7 @@ class TsCluster(object):
         self.centroids=[]
 
     # each centroid is a line, rather than a point!!!
-    def k_means_clust(self, data, num_iter, w, progress=False):
+    def k_means_clust(self, data, num_iter, progress=False, w=100, euclidean=True):
         '''
         k-means clustering algorithm for time series data.  dynamic time warping Euclidean distance
          used as default similarity measure.
@@ -38,9 +43,10 @@ class TsCluster(object):
                 closest_clust = None
                 for c_ind, j in enumerate(self.centroids):
                     # c_ind is the index of the centroid, j is the centroid
-                    # us LB_Keogh lower bound for speed; 5 is the reach
-                    if self.LB_Keogh(i, j, 5) < min_dist:
-                        cur_dist = self.DTWDistance(i, j, w)
+                    if dtw.lb_keogh_onQuery(i, j, w, euclidean) < min_dist:
+                        print('lb less than min dist -- calculating full dtw')
+                        # could use windowed dtw here instead to speed things up
+                        cur_dist = dtw.dist_dtw(i, j, euclidean)
                         if cur_dist < min_dist:
                             min_dist = cur_dist
                             closest_clust = c_ind
@@ -59,7 +65,7 @@ class TsCluster(object):
                     # k is the index of a time series in the current cluster
                     # add the time series to the cluster sum
                     clust_sum = clust_sum + data[k]
-                # update the each point in the centroid with the average of all points in the cluster of time
+                # update each point in the centroid with the average of all points in the cluster of time
                 # series around the centroid
                 self.centroids[key] = [m / len(self.assignments[key]) for m in clust_sum]
 
@@ -114,14 +120,14 @@ class TsCluster(object):
         complexity compared to quadratic complexity of dtw.
         '''
         LB_sum=0
-        for ind, i in enumerate(s1):
+        for ind,i in enumerate(s1):
 
-            lower_bound=min(s2[(ind - r if ind - r >= 0 else 0):(ind + r)])
-            upper_bound=max(s2[(ind - r if ind - r >= 0 else 0):(ind + r)])
+            lower_bound=min(s2[(ind-r if ind-r>=0 else 0):(ind+r)])
+            upper_bound=max(s2[(ind-r if ind-r>=0 else 0):(ind+r)])
 
-            if i > upper_bound:
-                LB_sum = LB_sum + (i - upper_bound)**2
-            elif i < lower_bound:
-                LB_sum = LB_sum + (i - lower_bound)**2
+            if i>upper_bound:
+                LB_sum=LB_sum+(i-upper_bound)**2
+            elif i<lower_bound:
+                LB_sum=LB_sum+(i-lower_bound)**2
 
         return np.sqrt(LB_sum)

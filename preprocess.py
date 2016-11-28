@@ -175,6 +175,13 @@ class Data(object):
             retval.append((individual, l_years))
         return retval
 
+def downsample(ts, factor):
+    '''Takes a time series and returns a downsampling where only one point every
+    factor points is kept'''
+    if factor < 1:
+        raise Exception("Downsampling factor must be >= 1")
+    return ts[0:len(ts):factor]
+
 def load_pickle(name):
     with open(name, 'rb') as f:
         p = pickle.load(f)
