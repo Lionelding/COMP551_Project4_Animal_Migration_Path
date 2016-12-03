@@ -11,6 +11,7 @@ import matplotlib.pylab as plt
 
 from preprocess import load
 from interpolation import normalize_time_series
+from utils import make_all_plottable
 
 ################################################################################
 # logging and options
@@ -66,18 +67,16 @@ if __name__ == '__main__':
         tss.append(individual_data)
 
     # print the data prior to normalization
-    ptss = []
-    for ts in tss:
-        ptss.append(([pt[0] for pt in ts], [pt[1] for pt in ts]))
+    ptss = make_all_plottable(tss)
 
     # plot one path
-    plt.plot(ptss[0][0], ptss[0][1])
+    plt.plot(ptss[0].x, ptss[0].y)
 
     plt.show()
 
     # plot all paths
-    for lats, lons in ptss:
-        plt.plot(lats, lons)
+    for plottable in ptss:
+        plt.plot(plottable.x), plottable.y)
 
     plt.show()
 
@@ -87,17 +86,15 @@ if __name__ == '__main__':
     # lets plot the paths to see how they look
 
     # remove time from the paths
-    ptss = []
-    for ts in tss:
-        ptss.append(([pt[0] for pt in ts], [pt[1] for pt in ts]))
+    ptss = make_all_plottable(tss)
 
     # plot one path
-    plt.plot(ptss[0][0], ptss[0][1])
+    plt.plot(ptss[0].x, ptss[0].y)
 
     plt.show()
 
     # plot all paths
-    for lats, lons in ptss:
-        plt.plot(lats, lons)
+    for plottable in ptss:
+        plt.plot(plottable.x, plottable.y)
 
     plt.show()

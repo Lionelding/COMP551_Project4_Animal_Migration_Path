@@ -3,7 +3,8 @@ from __future__ import print_function
 
 import numpy as np
 import sys
-import numpy as np
+
+from preprocess import downsample_all
 
 def interpolate(p1, p2, time):
     '''given two points (lat1, lon1, time1), (lat2, lon2, time2) and a time
@@ -96,13 +97,14 @@ def get_all_times_in_window(tss, start, end):
     times.sort()
     return times
 
-def normalize_time_series(tss):
+def normalize_time_series(tss, downsample_factor=None):
     # determine the latest start time and the earliest stop time
     start, end = get_time_limits(tss)
     print('Latest start time:')
     print(start)
     print('Earliest end time:')
     print(end)
+    print()
 
     # determine all the times within this window across all time series
     common_times = get_all_times_in_window(tss, start, end)
@@ -113,6 +115,13 @@ def normalize_time_series(tss):
 
     print('Shape of normalized time series:')
     print(new_tss.shape)
+    print()
+
+    if downsample_factor:
+        print('Downsampling all time series by a factor of %d' % downsample_factor)
+        print()
+        new_tss = downsample_all(new_tss, downsample_factor)
+        new_tss = np.array(new_tss)
 
     return new_tss
 

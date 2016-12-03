@@ -10,3 +10,8 @@ Subsequently, you can load the data as is done in **example_script.py**:
 e.g. `python example_script.py plover_river_delta.pkl`
 
 Have a look at **main** in **example_script.py** to see how you might work with the loaded data, use interpolation, etc.
+
+## k-means clustering
+See `clust.py`.
+Run with `python clust.py [options]`.
+An example with options: `python clust.py --n_clusts 2 --ds_factor 40 --st 0.001`

@@ -182,6 +182,13 @@ def downsample(ts, factor):
         raise Exception("Downsampling factor must be >= 1")
     return ts[0:len(ts):factor]
 
+def downsample_all(tss, factor):
+    '''wrapper to downsample a bunch of time series using the above method'''
+    new_tss = []
+    for ts in tss:
+        new_tss.append(downsample(ts, factor))
+    return new_tss
+
 def load_pickle(name):
     with open(name, 'rb') as f:
         p = pickle.load(f)

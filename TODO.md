@@ -1,6 +1,16 @@
 # TODO
 
-## - General TODOS
+## General TODOS
+- implement cross-validation for clustering
+    - which means, add a loss function as well
+- implement euclidean distance and clustering by euclidean distance
+- modify preprocessing/interpolation to work with timeframes rather than simply years
+
+
+
+
+
+
 [x] Determine structure of data points:
     Q: is there a point for each animal at each time? i.e. are tracking devices coordinated in their measurements?
     A: in general no
@@ -9,7 +19,7 @@
 [x] Does DTW require that each time series have measurements taken at the same times?
     A: No, doesn't actually care about times or time interval between points
 [x] Implement interpolation
-[ ] Replace custom keogh and dtw in clustering alg with python dtw implementations
+[x] Replace custom keogh and dtw in clustering alg with python dtw implementations
 
 
 ## Notes
