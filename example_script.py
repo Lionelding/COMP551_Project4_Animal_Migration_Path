@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     # plot all paths
     for plottable in ptss:
-        plt.plot(plottable.x), plottable.y)
+        plt.plot(plottable.x, plottable.y)
 
     plt.show()
 
