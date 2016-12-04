@@ -61,10 +61,16 @@ if __name__ == '__main__':
     print(indiv_0)
     print('shape of path')
     print(pts.shape)
+    print()
 
     tss = []
     for individual_id, individual_data in indivs:
         tss.append(individual_data)
+
+    tss = np.array(tss)
+    print('shape of all time series before normalization')
+    print(tss.shape)
+    print()
 
     # print the data prior to normalization
     ptss = make_all_plottable(tss)
@@ -76,17 +82,22 @@ if __name__ == '__main__':
 
     # plot all paths
     for plottable in ptss:
-        plt.plot(plottable.x), plottable.y)
+        plt.plot(plottable.x, plottable.y)
 
     plt.show()
 
     # now we can normalize
     normd_tss = normalize_time_series(tss)
 
+    normd_tss = np.array(normd_tss)
+    print('shape of all time series after normalization')
+    print(normd_tss.shape)
+    print()
+
     # lets plot the paths to see how they look
 
     # remove time from the paths
-    ptss = make_all_plottable(tss)
+    ptss = make_all_plottable(normd_tss)
 
     # plot one path
     plt.plot(ptss[0].x, ptss[0].y)

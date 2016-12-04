@@ -97,6 +97,9 @@ def get_all_times_in_window(tss, start, end):
     times.sort()
     return times
 
+def get_months(secs):
+    return secs / (60. * 60. * 24. * 30)
+
 def normalize_time_series(tss, downsample_factor=None):
     # determine the latest start time and the earliest stop time
     start, end = get_time_limits(tss)
@@ -104,6 +107,8 @@ def normalize_time_series(tss, downsample_factor=None):
     print(start)
     print('Earliest end time:')
     print(end)
+    print('Difference in months')
+    print(get_months(end - start))
     print()
 
     # determine all the times within this window across all time series
