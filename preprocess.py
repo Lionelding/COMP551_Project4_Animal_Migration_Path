@@ -9,15 +9,38 @@ import cPickle as pickle
 import time
 import datetime
 
-''' Struture
-{
-    year: {
-        individual_id: [data points],
-        ...
-    },
-    ...
-}
-'''
+################################################################################
+# New preprocessing
+################################################################################
+
+#----------
+# constants
+#----------
+
+SECS_PER_DAY = 60*60*24
+SECS_PER_YEAR = SECS_PER_DAY * 365
+
+#---------------------
+# downsampling helpers
+#---------------------
+
+def downsample(ts, factor):
+    '''Takes a time series and returns a downsampling where only one point every
+    factor points is kept'''
+    if factor < 1:
+        raise Exception("Downsampling factor must be >= 1")
+    return ts[0:len(ts):factor]
+
+def downsample_all(tss, factor):
+    '''wrapper to downsample a bunch of time series using the above method'''
+    new_tss = []
+    for ts in tss:
+        new_tss.append(downsample(ts, factor))
+    return new_tss
+
+#--------------
+# Other helpers
+#--------------
 def get_col_index(col_titles, title):
     for i, curr_title in enumerate(col_titles):
         if curr_title == title:
@@ -45,6 +68,168 @@ def get_unix_ts(ts_str):
     dt = datetime.datetime(year, month, day, hour, minute, second)
 
     return time.mktime(dt.timetuple())
+
+def sort_by_time(data):
+    '''for each individual in data, sorts the time series by time'''
+    for indiv_id in data:
+        data[indiv_id].sort(key=lambda x: x[2])
+    return data
+
+def get_data_by_individual(fname):
+    '''given a filename, returns a map of individual to data'''
+    data = []
+    with open(fname, 'rb') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        col_titles = reader.next()
+        timestamp_col = get_col_index(col_titles, 'timestamp')
+        if timestamp_col == -1:
+            print('Could not find column `timestamp`')
+            sys.exit(1)
+        ili_col = get_col_index(col_titles, 'individual-local-identifier')
+        if ili_col == -1:
+            print('Could not find column `individual-local-identifier`')
+            sys.exit(1)
+        lat_col = get_col_index(col_titles, 'location-lat')
+        if lat_col == -1:
+            print('Could not find column `location-lat`')
+            sys.exit(1)
+        lon_col = get_col_index(col_titles, 'location-long')
+        if lon_col == -1:
+            print('Could not find column `location-long`')
+            sys.exit(1)
+
+        # create a map of individual-local-identifier to time series
+        data = {}
+        for row in reader:
+            # get the timestamp
+            timestamp = row[timestamp_col]
+            # convert the timestamp string into a utc timestamp
+            time = get_unix_ts(timestamp)
+            # get the individual
+            individual = row[ili_col]
+            # get the location
+            # get the data
+            try:
+                lat = float(row[lat_col])
+                lon = float(row[lon_col])
+                pt = [lon, lat, time]
+                # add the point to the time series of the appropriate individual
+                if individual not in data:
+                    data[individual] = []
+                data[individual].append(pt)
+            except ValueError:
+                print('cannot cast `%s` to float' % row[lat_col])
+
+        # let's be sure that all the data is properly sorted...
+        return sort_by_time(data)
+
+def pretty_time(ts):
+    return datetime.datetime.fromtimestamp(ts).strftime('%d/%m/%Y')
+
+class TimeSeries(object):
+    def __init__(self, id, series):
+        self.id = id
+        self.series = series
+
+    def __str__(self):
+        return self.id + ', ' + pretty_time(self.series[0][2]) + ' - ' + pretty_time(self.series[-1][2])
+
+class RelativeDate(object):
+    def __init__(self, month, day):
+        self.month = month
+        self.day = day
+
+class RelativeDateRange(object):
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+
+    def contains(self, date):
+        if date.month > self.start.month and date.month < self.end.month:
+            return True
+        elif date.month == self.start.month:
+            if date.month == self.end.month:
+                return date.day >= self.start.day and date.day <= self.end.day
+            else:
+                return date.day >= self.start.day
+        elif date.month == self.end.month:
+            return date.day <= self.end.day
+        else:
+            return False
+
+    def get_total_time(self):
+        # Assume 30 day months
+        num_months = self.end.month - self.start.month
+        num_days = self.end.days - self.start.days
+        return float((num_months*30 + num_days) * SECS_PER_DAY)
+
+def get_total_time(series):
+    return series[-1][2] - series[0][2]
+
+def should_add(series, rdr=None):
+    series_time = get_total_time(series)
+    if rdr:
+        range_time = rdr.get_total_time()
+    else:
+        range_time = SECS_PER_YEAR
+
+    if (series_time / range_time) > 0.8:
+        return True
+
+    print('Rejecting series')
+    return False
+
+def split_time_series(indiv_id, time_series, relative_date_range=None):
+    '''given an id and a time series, splits the time series according to the
+    relative date range and returns a list of the splits. Uses some extrapolation if need be'''
+    if relative_date_range:
+        split = []
+        curr_series = []
+        for pt in time_series:
+            curr_date = datetime.datetime.fromtimestamp(pt[2])
+            if relative_date_range.contains(curr_date):
+                curr_series.append(pt)
+            elif len(curr_series) != 0:
+                # decide if curr_series contains enough points to be added
+                if should_add(curr_series, relative_date_range)
+                    split.append(TimeSeries(indiv_id, curr_series))
+                curr_series = []
+        return split
+    else:
+        # split according to years
+        year_to_series = {}
+        for pt in time_series:
+            curr_date = datetime.datetime.fromtimestamp(pt[2])
+            if curr_date.year not in year_to_series:
+                year_to_series[curr_date.year] = []
+            year_to_series[curr_date.year].append(pt)
+        split = []
+        for year, series in year_to_series.iteritems():
+            if should_add(series):
+                split.append(TimeSeries(indiv_id, series))
+        return split
+
+def get_time_series(data, relative_date_range=None):
+    '''takes an mapping of individual id to the time series for the individual and
+    returns a list of TimeSeries objects constructed according to the relative date range'''
+    tsos = []   # time series objects
+    for indiv_id, time_series in data.iteritems():
+        tsos += split_time_series(indiv_id, time_series, relative_date_range)
+    return tsos
+
+################################################################################
+# Old preprocessing
+################################################################################
+
+''' Struture
+{
+    year: {
+        individual_id: [data points],
+        ...
+    },
+    ...
+}
+'''
 
 def read_data(fname):
     data_by_year = {}
@@ -89,15 +274,19 @@ def read_data(fname):
                 data_by_individual[individual][year] = []
 
             # get the data
-            lat = float(row[lat_col])
-            lon = float(row[lon_col])
-            # convert the timestamp string into a utc timestamp
-            time = get_unix_ts(timestamp)
+            try:
+                lat = float(row[lat_col])
+                lon = float(row[lon_col])
+                # convert the timestamp string into a utc timestamp
+                time = get_unix_ts(timestamp)
 
-            feature_vec = [lon, lat, time]
+                feature_vec = [lon, lat, time]
 
-            data_by_year[year][individual].append(feature_vec)
-            data_by_individual[individual][year].append(feature_vec)
+                data_by_year[year][individual].append(feature_vec)
+                data_by_individual[individual][year].append(feature_vec)
+            except ValueError:
+                print('cannot cast %s to float' % row[lat_col])
+
         return data_by_year, data_by_individual
 
 # Note: this is a pretty inefficient data structure - stores the same data twice
@@ -141,19 +330,9 @@ class Data(object):
             retval.append((individual, l_years))
         return retval
 
-def downsample(ts, factor):
-    '''Takes a time series and returns a downsampling where only one point every
-    factor points is kept'''
-    if factor < 1:
-        raise Exception("Downsampling factor must be >= 1")
-    return ts[0:len(ts):factor]
-
-def downsample_all(tss, factor):
-    '''wrapper to downsample a bunch of time series using the above method'''
-    new_tss = []
-    for ts in tss:
-        new_tss.append(downsample(ts, factor))
-    return new_tss
+################################################################################
+# Pickling
+################################################################################
 
 def load_pickle(name):
     with open(name, 'rb') as f:
@@ -181,51 +360,5 @@ def preprocess(source_name, dest_name):
 def load(fname):
     '''returns a pre-pickled Data object'''
     return load_pickle(fname)
-
-################################################################################
-# Other preprocessing
-################################################################################
-
-def get_data_by_individual(fname):
-    data = []
-    with open(fname, 'rb') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        col_titles = reader.next()
-        timestamp_col = get_col_index(col_titles, 'timestamp')
-        if timestamp_col == -1:
-            print('Could not find column `timestamp`')
-            sys.exit(1)
-        ili_col = get_col_index(col_titles, 'individual-local-identifier')
-        if ili_col == -1:
-            print('Could not find column `individual-local-identifier`')
-            sys.exit(1)
-        lat_col = get_col_index(col_titles, 'location-lat')
-        if lat_col == -1:
-            print('Could not find column `location-lat`')
-            sys.exit(1)
-        lon_col = get_col_index(col_titles, 'location-long')
-        if lon_col == -1:
-            print('Could not find column `location-long`')
-            sys.exit(1)
-
-        # create a map of individual-local-identifier to time series
-        data = {}
-        for row in reader:
-            # get the timestamp
-            timestamp = row[timestamp_col]
-            # convert the timestamp string into a utc timestamp
-            time = get_unix_ts(timestamp)
-            # get the individual
-            individual = row[ili_col]
-            # get the location
-            lat = float(row[lat_col])
-            lon = float(row[lon_col])
-            # create a time series point
-            pt = [lon, lat, time]
-            # add the point to the time series of the appropriate individual
-            if individual not in data:
-                data[individual] = []
-            data[individual].append(pt)
-        return data
 
 ## End

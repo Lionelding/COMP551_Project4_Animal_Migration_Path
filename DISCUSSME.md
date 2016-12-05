@@ -15,3 +15,13 @@ So by the end of the meeting we should
     - have planned datasets and experiments for each dataset
 And by the end of the day:
     - fully functional code
+
+
+- Turkey vultures and White fronted geese
+- For turkey vultures, use years, for geese use March-October for all years possible
+- **TODO** Implement preprocessing for this
+
+- **TODO** For interpolation, will have to implement constant intervals
+- **TODO** Cross-validation implementation
+
+- **TODO** Figure out how to analyze clusters

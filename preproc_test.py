@@ -77,18 +77,27 @@ def plot_lat_vs_time(data, individually=False):
         plot_series(tss, 2, 1, variable_length=True)
 
 SECONDS_PER_YEAR = 60 * 60 * 24 * 365
-NUM_YEARS = 1.
+NUM_YEARS = .4
 
 if __name__ == '__main__':
 
     # get all the data
-    data = get_data_by_individual('data/turkey_vultures.csv')
+    data = get_data_by_individual('data/white_geese.csv')
 
     print('total number of individuals')
     print(len(data))
 
+    # print all the data
+    plot_lat_vs_time(data)
+
     # get Individual objects for each of the individuals in the data set
     indivs = get_start_and_end_times_by_individual(data)
+
+    print('id\tstart\tend')
+    for indiv in indivs:
+        print('%s\t%s\t%s' % (indiv.id, convert_unix_ts_to_date_string(indiv.start), convert_unix_ts_to_date_string(indiv.end)))
+
+    print()
 
     # filter the individuals to get just those that have overlap in data points
     # for at least NUM_YEARS years

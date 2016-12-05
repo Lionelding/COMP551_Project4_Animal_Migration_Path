@@ -1,6 +1,14 @@
 # TODO
 
 ## General TODOS
+- For turkey vultures, use years, for geese use March-October for all years possible
+- *DONE* Implement preprocessing for this
+- **TODO** For interpolation, will have to implement constant intervals
+- **TODO** Cross-validation implementation
+
+- **TODO** Figure out how to analyze clusters
+
+
 - implement cross-validation for clustering
     - which means, add a loss function as well
 - implement euclidean distance and clustering by euclidean distance
