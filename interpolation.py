@@ -9,18 +9,18 @@ from preprocess import downsample_all
 def interpolate(p1, p2, time):
     '''given two points (lat1, lon1, time1), (lat2, lon2, time2) and a time
     return the lat, lon interpolation between the points for the time'''
-    lat1, lon1, t1 = p1
-    lat2, lon2, t2 = p2
+    lon1, lat1, t1 = p1
+    lon2, lat2, t2 = p2
     if time == t1:
-        return lat1, lon1
+        return lon1, lat1
     elif time == t2:
-        return lat2, lon2
+        return lon2, lat2
     time_difference = t2 - t1
     t = time - t1
     time_ratio = t / time_difference
     new_lat = lat1 + (lat2 - lat1) * time_ratio
     new_lon = lon1 + (lon2 - lon1) * time_ratio
-    return new_lat, new_lon
+    return new_lon, new_lat
 
 def get_sandwich_points(ts, time):
     '''returns index of point with time just after (or equal to) the given time'''
@@ -40,8 +40,8 @@ def interpolate_ts(ts, times):
     new_ts = []
     for time in times:
         next_idx = get_sandwich_points(ts, time)
-        lat, lon = interpolate(ts[next_idx-1], ts[next_idx], time)
-        new_ts.append([lat, lon, time])
+        lon, lat = interpolate(ts[next_idx-1], ts[next_idx], time)
+        new_ts.append([lon, lat, time])
     return new_ts
 
 def interpolate_tss(tss, times):

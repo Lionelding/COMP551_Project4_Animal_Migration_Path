@@ -68,7 +68,7 @@ def max_subset(indivs, s):
 
   return largest
 
-def plot_lon_vs_time(data, individually=False):
+def plot_lat_vs_time(data, individually=False):
     tss = [s for id, s in data.iteritems()]
     if individually:
         for ts in tss:
@@ -111,8 +111,8 @@ if __name__ == '__main__':
     print(normd_tss.shape)
     print()
 
-    # plot lon vs time
+    # plot lat vs time
     plot_series(normd_tss, 2, 1)
 
-    # plot lon vs lat
+    # plot lat vs lon
     plot_series(normd_tss)

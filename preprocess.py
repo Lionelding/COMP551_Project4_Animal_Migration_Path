@@ -94,7 +94,7 @@ def read_data(fname):
             # convert the timestamp string into a utc timestamp
             time = get_unix_ts(timestamp)
 
-            feature_vec = [lat, lon, time]
+            feature_vec = [lon, lat, time]
 
             data_by_year[year][individual].append(feature_vec)
             data_by_individual[individual][year].append(feature_vec)
@@ -186,7 +186,6 @@ def load(fname):
 # Other preprocessing
 ################################################################################
 
-
 def get_data_by_individual(fname):
     data = []
     with open(fname, 'rb') as csvfile:
@@ -222,7 +221,7 @@ def get_data_by_individual(fname):
             lat = float(row[lat_col])
             lon = float(row[lon_col])
             # create a time series point
-            pt = [lat, lon, time]
+            pt = [lon, lat, time]
             # add the point to the time series of the appropriate individual
             if individual not in data:
                 data[individual] = []

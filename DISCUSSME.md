@@ -15,3 +15,5 @@ instance.
 So by the end of the meeting we should
     - know more or less exactly what we are doing
     - have planned datasets and experiments for each dataset
+And by the end of the day:
+    - fully functional code
