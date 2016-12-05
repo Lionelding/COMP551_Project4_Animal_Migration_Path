@@ -47,29 +47,6 @@ def get_unix_ts(ts_str):
     return time.mktime(dt.timetuple())
 
 def read_data(fname):
-    '''if organize=false, returns an array containing (lat, lon, time) datapoints
-    else returns a dictionary with the above structure'''
-    '''
-    if not organize:
-        data = []
-        with open(fname, 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',')
-            # skip the header
-            reader.next()
-            for row in reader:
-                feature_vec = []
-                for col in cols:
-                    feat_val = row[col]
-                    # attempt to cast feat_val to a float
-                    try:
-                        feat_val = float(feat_val)
-                    except ValueError:
-                        print('unable to cast feature to float')
-                        sys.exit(1)
-                    feature_vec.append(feat_val)
-                data.append(feature_vec)
-        return data
-    '''
     data_by_year = {}
     data_by_individual = {}
     with open(fname, 'rb') as csvfile:
@@ -121,17 +98,6 @@ def read_data(fname):
 
             data_by_year[year][individual].append(feature_vec)
             data_by_individual[individual][year].append(feature_vec)
-            '''
-            for col in cols:
-                feat_val = row[col]
-                # attempt to cast feat_val to a float
-                try:
-                    feat_val = float(feat_val)
-                except ValueError:
-                    print('unable to cast feature to float')
-                    sys.exit(1)
-                feature_vec.append(feat_val)
-            '''
         return data_by_year, data_by_individual
 
 # Note: this is a pretty inefficient data structure - stores the same data twice
@@ -215,3 +181,52 @@ def preprocess(source_name, dest_name):
 def load(fname):
     '''returns a pre-pickled Data object'''
     return load_pickle(fname)
+
+################################################################################
+# Other preprocessing
+################################################################################
+
+
+def get_data_by_individual(fname):
+    data = []
+    with open(fname, 'rb') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        col_titles = reader.next()
+        timestamp_col = get_col_index(col_titles, 'timestamp')
+        if timestamp_col == -1:
+            print('Could not find column `timestamp`')
+            sys.exit(1)
+        ili_col = get_col_index(col_titles, 'individual-local-identifier')
+        if ili_col == -1:
+            print('Could not find column `individual-local-identifier`')
+            sys.exit(1)
+        lat_col = get_col_index(col_titles, 'location-lat')
+        if lat_col == -1:
+            print('Could not find column `location-lat`')
+            sys.exit(1)
+        lon_col = get_col_index(col_titles, 'location-long')
+        if lon_col == -1:
+            print('Could not find column `location-long`')
+            sys.exit(1)
+
+        # create a map of individual-local-identifier to time series
+        data = {}
+        for row in reader:
+            # get the timestamp
+            timestamp = row[timestamp_col]
+            # convert the timestamp string into a utc timestamp
+            time = get_unix_ts(timestamp)
+            # get the individual
+            individual = row[ili_col]
+            # get the location
+            lat = float(row[lat_col])
+            lon = float(row[lon_col])
+            # create a time series point
+            pt = [lat, lon, time]
+            # add the point to the time series of the appropriate individual
+            if individual not in data:
+                data[individual] = []
+            data[individual].append(pt)
+        return data
+
+## End

@@ -17,7 +17,7 @@ class Plottable(object):
         self.x = x
         self.y = y
 
-def make_plottable(ts, x_idx=0, y_idx=1):
+def make_plottable(ts, x_idx=0, y_idx=10):
     x, y = [pt[x_idx] for pt in ts], [pt[y_idx] for pt in ts]
     return Plottable(x, y)
 
@@ -27,8 +27,8 @@ def make_all_plottable(tss, x_idx=0, y_idx=1):
         ptss.append(make_plottable(ts, x_idx, y_idx))
     return ptss
 
-def plot_series(ss, x_idx=0, y_idx=1):
-    if len(ss.shape) == 3:
+def plot_series(ss, x_idx=0, y_idx=1, variable_length=False):
+    if variable_length or len(ss.shape) == 3:
         plottables = make_all_plottable(ss, x_idx, y_idx)
     else:
         plottables = [make_plottable(ss, x_idx, y_idx)]
