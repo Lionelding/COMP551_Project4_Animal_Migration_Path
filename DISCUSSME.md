@@ -1,5 +1,3 @@
-Things to chat about with the team
-
 - We are having lots of trouble with years/seasons etc.
 1. Perhaps it is not worth the trouble trying to split at a finer grain than years
     - should we still be concerned with splitting a migration in half?
