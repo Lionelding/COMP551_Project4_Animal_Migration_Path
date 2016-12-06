@@ -30,3 +30,4 @@ Run `python run_1.py --h` for a list of options.
 
 We still need code to cluster temporally! But for now, you can always load the results pickled by `run_1.py` using `run_2.py`.
 Run with `python run_2.py [source_path]`, where `source_path` is the name of the pickled results `run_1.py` saved in `./postprocessed_data/`.
+For an example, run with `python run_2.py example.pkl`
