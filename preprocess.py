@@ -10,6 +10,7 @@ import time
 import datetime
 
 from constants import SECS_PER_DAY, SECS_PER_YEAR
+from utils import extract_lat_and_lon
 
 ################################################################################
 # New preprocessing
@@ -124,10 +125,12 @@ def pretty_time(ts):
 class TimeSeries(object):
     def __init__(self, id, series):
         self.id = id
-        self.series = series
+        self.series = np.array(series)
+        self.loc_series = extract_lat_and_lon(series)
 
     def set_interpolated_series(self, interpolated_series):
-        self.interpolated_series = interpolated_series
+        self.interpolated_series = np.array(interpolated_series)
+        self.interpolated_loc_series = extract_lat_and_lon(interpolated_series)
 
     def __str__(self):
         return self.id + ', ' + pretty_time(self.series[0][2]) + ' - ' + pretty_time(self.series[-1][2])
@@ -173,7 +176,7 @@ def should_add(series, rdr=None):
     else:
         range_time = SECS_PER_YEAR
 
-    if (series_time / range_time) > 0.8:
+    if (series_time / range_time) > 0.5:
         return True
 
     return False
@@ -350,7 +353,7 @@ def save_pickle(name, content):
     if '.pkl' not in name:
         name = 'preprocessed_data/' + name + '.pkl'
     else:
-        name = name = 'preprocessed_data/' + name
+        name = 'preprocessed_data/' + name
     print('saving data as %s' % name)
     with open(name, 'wb') as f:
         pickle.dump(content, f)

@@ -7,6 +7,7 @@ import time
 import datetime
 
 from preprocess import downsample_all
+from preprocess import RelativeDate
 
 from constants import SECS_PER_DAY
 
@@ -103,13 +104,17 @@ def fix_date_range(ts, relative_date_range):
     # assumptions
     #   the relative date range spans only up to one year, and its start and end are in the same year
     year = datetime.datetime.fromtimestamp(ts[0][2]).year
-    range_start = relative_date_range.start
-    range_end = relative_date_range.end
+    if relative_date_range:
+        range_start = relative_date_range.start
+        range_end = relative_date_range.end
+    else:
+        range_start = RelativeDate(1, 1)
+        range_end = RelativeDate(12, 31)
     start = datetime.datetime(year, range_start.month, range_start.day)
     end = datetime.datetime(year, range_end.month, range_end.day)
     return time.mktime(start.timetuple()), time.mktime(end.timetuple())
 
-def normalize_time_series_objects(tsos, relative_date_range, interval):
+def normalize_time_series_objects(tsos, interval, relative_date_range):
     # for each time series, we need to interpolate points every interval days over
     # the course of date range
     shortest = sys.maxint

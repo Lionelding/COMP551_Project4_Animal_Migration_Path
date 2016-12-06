@@ -43,7 +43,12 @@ def plot_series(ss, x_idx=0, y_idx=1, variable_length=False):
 ################################################################################
 
 def extract_lat_and_lon(tss):
-    ptss = []
-    for pts in tss:
-        ptss.append([pt[:2] for pt in pts])
-    return np.array(ptss)
+    if not hasattr(tss, 'shape'):
+        tss = np.array(tss)
+    if len(tss.shape) == 3:
+        ptss = []
+        for pts in tss:
+            ptss.append([pt[:2] for pt in pts])
+        return np.array(ptss)
+    else:
+        return np.array([pt[:2] for pt in tss])

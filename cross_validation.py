@@ -1,12 +1,22 @@
 '''Cross validation'''
 
-# how will it work here? This is not supervised learning
+from __future__ import print_function
 
-# Number of iterations will be fixed (or run till convergence)
-# Number of clusters is what we must cross-validate over
-#   For each number of clusters:
-#       Repeat for i iterations:
-#           Run clustering algorithm
+class CrossValidator(object):
 
+    def __init__(self, n_restarts, tsos):
+        self.n_restarts = n_restarts
+        self.tsos = tsos
 
-# TODO: write code to not stop clustering till error decrease is less than some threshold, or after a certain number of iterations, whichever comes first
+    def cross_validate(self, clusterer):
+        '''Clusters the time series objects using the clusterer n_restarts times
+        recording the error obtained each time. Returns the average error.'''
+        errs = []
+        for i in range(self.n_restarts):
+            clusterer.k_means_clust(self.tsos, verbose=True)
+            err = clusterer.get_assignment_error()
+            print('Error for clustering attempt #%d: %f' % (i, err))
+            errs.append(err)
+        return sum(errs)/len(errs)
+
+## END

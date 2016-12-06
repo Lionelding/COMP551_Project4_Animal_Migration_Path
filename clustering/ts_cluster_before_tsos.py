@@ -17,7 +17,7 @@ def l2_norm(x, y):
 
 class TsCluster(object):
 
-    def __init__(self, num_clust, dist_norm, stopping_threshold=1.):
+    def __init__(self, num_clust, dist_norm, max_iterations, stopping_threshold=1.):
         '''
         num_clust is the number of clusters for the k-means algorithm
         assignments holds the assignments of data points (indices) to clusters
@@ -28,6 +28,7 @@ class TsCluster(object):
         else:
             self.dist_norm = l2_norm
         self.num_clust = num_clust
+        self.max_iterations = max_iterations
         self.assignments = {}
         self.centroids = []
         self.stopping_threshold = stopping_threshold
@@ -78,7 +79,7 @@ class TsCluster(object):
             return False
 
     # each centroid is a line, rather than a point!!!
-    def k_means_clust(self, data, max_iter, verbose=False):
+    def k_means_clust(self, data, verbose=False):
         '''
         k-means clustering algorithm for time series data.  dynamic time warping Euclidean distance
          used as default similarity measure.
@@ -88,7 +89,7 @@ class TsCluster(object):
         self.centroids = random.sample(data, self.num_clust)
 
         err_hist = [float('inf')]
-        for n in range(max_iter):
+        for n in range(self.max_iterations):
             if verbose:
                 print('iteration ' + str(n + 1))
             # assign data points to clusters
