@@ -160,13 +160,15 @@ class RelativeDateRange(object):
     def get_total_time(self):
         # Assume 30 day months
         num_months = self.end.month - self.start.month
-        num_days = self.end.days - self.start.days
+        num_days = self.end.day - self.start.day
         return float((num_months*30 + num_days) * SECS_PER_DAY)
 
 def get_total_time(series):
     return series[-1][2] - series[0][2]
 
 def should_add(series, rdr=None):
+    if len(series) == 0:
+        return False
     series_time = get_total_time(series)
     if rdr:
         range_time = rdr.get_total_time()
@@ -176,7 +178,6 @@ def should_add(series, rdr=None):
     if (series_time / range_time) > 0.8:
         return True
 
-    print('Rejecting series')
     return False
 
 def split_time_series(indiv_id, time_series, relative_date_range=None):
@@ -191,9 +192,15 @@ def split_time_series(indiv_id, time_series, relative_date_range=None):
                 curr_series.append(pt)
             elif len(curr_series) != 0:
                 # decide if curr_series contains enough points to be added
-                if should_add(curr_series, relative_date_range)
+                if should_add(curr_series, relative_date_range):
                     split.append(TimeSeries(indiv_id, curr_series))
+                else:
+                    print('Rejecting series for individual %s' % indiv_id)
                 curr_series = []
+        if should_add(curr_series):
+            split.append(curr_series)
+        else:
+            print('Rejecting series for individual %s' % indiv_id)
         return split
     else:
         # split according to years
@@ -207,6 +214,8 @@ def split_time_series(indiv_id, time_series, relative_date_range=None):
         for year, series in year_to_series.iteritems():
             if should_add(series):
                 split.append(TimeSeries(indiv_id, series))
+            else:
+                print('Rejecting series for individual %s' % indiv_id)
         return split
 
 def get_time_series(data, relative_date_range=None):

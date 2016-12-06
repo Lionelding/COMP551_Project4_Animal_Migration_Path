@@ -28,6 +28,8 @@ def make_all_plottable(tss, x_idx=0, y_idx=1):
     return ptss
 
 def plot_series(ss, x_idx=0, y_idx=1, variable_length=False):
+    if not variable_length and not hasattr(ss, 'shape'):
+        ss = np.array(ss)
     if variable_length or len(ss.shape) == 3:
         plottables = make_all_plottable(ss, x_idx, y_idx)
     else:
