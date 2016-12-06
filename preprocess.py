@@ -167,7 +167,7 @@ class RelativeDateRange(object):
 def get_total_time(series):
     return series[-1][2] - series[0][2]
 
-def should_add(series, rdr=None):
+def should_add(series, rdr=None, inclusion_threshold=0.5):
     if len(series) == 0:
         return False
     series_time = get_total_time(series)
@@ -176,12 +176,12 @@ def should_add(series, rdr=None):
     else:
         range_time = SECS_PER_YEAR
 
-    if (series_time / range_time) > 0.5:
+    if (series_time / range_time) >= inclusion_threshold:
         return True
 
     return False
 
-def split_time_series(indiv_id, time_series, relative_date_range=None):
+def split_time_series(indiv_id, time_series, relative_date_range=None, inclusion_threshold=0.5):
     '''given an id and a time series, splits the time series according to the
     relative date range and returns a list of the splits. Uses some extrapolation if need be'''
     if relative_date_range:
@@ -193,12 +193,12 @@ def split_time_series(indiv_id, time_series, relative_date_range=None):
                 curr_series.append(pt)
             elif len(curr_series) != 0:
                 # decide if curr_series contains enough points to be added
-                if should_add(curr_series, relative_date_range):
+                if should_add(curr_series, relative_date_range, inclusion_threshold):
                     split.append(TimeSeries(indiv_id, curr_series))
                 else:
                     print('Rejecting series for individual %s' % indiv_id)
                 curr_series = []
-        if should_add(curr_series):
+        if should_add(curr_series, relative_date_range, inclusion_threshold):
             split.append(curr_series)
         else:
             print('Rejecting series for individual %s' % indiv_id)
@@ -213,18 +213,18 @@ def split_time_series(indiv_id, time_series, relative_date_range=None):
             year_to_series[curr_date.year].append(pt)
         split = []
         for year, series in year_to_series.iteritems():
-            if should_add(series):
+            if should_add(series, inclusion_threshold=inclusion_threshold):
                 split.append(TimeSeries(indiv_id, series))
             else:
                 print('Rejecting series for individual %s' % indiv_id)
         return split
 
-def get_time_series(data, relative_date_range=None):
+def get_time_series(data, relative_date_range=None, inclusion_threshold=0.5):
     '''takes an mapping of individual id to the time series for the individual and
     returns a list of TimeSeries objects constructed according to the relative date range'''
     tsos = []   # time series objects
     for indiv_id, time_series in data.iteritems():
-        tsos += split_time_series(indiv_id, time_series, relative_date_range)
+        tsos += split_time_series(indiv_id, time_series, relative_date_range, inclusion_threshold)
     return tsos
 
 ################################################################################

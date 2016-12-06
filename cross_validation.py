@@ -15,7 +15,8 @@ class CrossValidator(object):
         for i in range(self.n_restarts):
             clusterer.k_means_clust(self.tsos, verbose=True)
             err = clusterer.get_assignment_error()
-            print('Error for clustering attempt #%d: %f' % (i, err))
+            print('Clustering error for attempt #%d: %f' % (i, err))
+            print()
             errs.append(err)
         return sum(errs)/len(errs)
 

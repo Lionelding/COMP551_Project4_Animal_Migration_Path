@@ -25,7 +25,7 @@ class Centroid(object):
 
     def update(self, clust_sum, size):
         clust_sum = np.array(clust_sum)
-        self.loc_series = [m / size for m in clust_sum]
+        self.loc_series = np.array([m / size for m in clust_sum])
         self.series = self.get_updated_time_series()
 
     def get_updated_time_series(self):
@@ -104,7 +104,7 @@ class TsClusterer(object):
         self.tsos = tsos
         self.num_time_series = len(tsos)
         centroid_tsos = random.sample(tsos, self.num_clust)
-        self.centroids = [Centroid(i, tso.series) for i, tso in enumerate(centroid_tsos)]
+        self.centroids = [Centroid(i, tso.interpolated_series) for i, tso in enumerate(centroid_tsos)]
 
         err_hist = [float('inf')]
         for n in range(self.max_iterations):
