@@ -9,16 +9,11 @@ import cPickle as pickle
 import time
 import datetime
 
+from constants import SECS_PER_DAY, SECS_PER_YEAR
+
 ################################################################################
 # New preprocessing
 ################################################################################
-
-#----------
-# constants
-#----------
-
-SECS_PER_DAY = 60*60*24
-SECS_PER_YEAR = SECS_PER_DAY * 365
 
 #---------------------
 # downsampling helpers
@@ -130,6 +125,9 @@ class TimeSeries(object):
     def __init__(self, id, series):
         self.id = id
         self.series = series
+
+    def set_interpolated_series(self, interpolated_series):
+        self.interpolated_series = interpolated_series
 
     def __str__(self):
         return self.id + ', ' + pretty_time(self.series[0][2]) + ' - ' + pretty_time(self.series[-1][2])

@@ -1,0 +1,4 @@
+'''constants'''
+
+SECS_PER_DAY = 60.*60.*24.
+SECS_PER_YEAR = SECS_PER_DAY*365.

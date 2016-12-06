@@ -3,8 +3,17 @@ from __future__ import print_function
 
 import numpy as np
 import sys
+import time
+import datetime
 
 from preprocess import downsample_all
+
+from constants import SECS_PER_DAY
+
+# Now, we have a bunch of points within a given time frame
+# We need to fucking interpolate at a constant interval
+# For example, say we are given points that spread a range of 1 year.
+# Then we might want a point each day.
 
 def interpolate(p1, p2, time):
     '''given two points (lat1, lon1, time1), (lat2, lon2, time2) and a time
@@ -35,12 +44,25 @@ def get_sandwich_points(ts, time):
     # should never make it here
     return -1
 
+def get_closest_position(ts, t):
+    '''returns the lat, lon at a time in the time series closest to time t
+    will only ever be called for times t outside the range of the time series,
+    so we will return either the first point or the last in the series'''
+    if t < ts[0][2]:
+        return ts[0][0], ts[0][1]
+    else:
+        return ts[-1][0], ts[-1][1]
+
 def interpolate_ts(ts, times):
     '''given a timeseries and a sequence of times, interpolate for each time'''
     new_ts = []
     for time in times:
         next_idx = get_sandwich_points(ts, time)
-        lon, lat = interpolate(ts[next_idx-1], ts[next_idx], time)
+        if next_idx == -1:
+            # extrapolate to the closest point
+            lon, lat = get_closest_position(ts, time)
+        else:
+            lon, lat = interpolate(ts[next_idx-1], ts[next_idx], time)
         new_ts.append([lon, lat, time])
     return new_ts
 
@@ -61,31 +83,6 @@ def get_time_limits(tss):
             earliest_et = ts[len(ts)-1][2]
     return latest_st, earliest_et
 
-'''
-def get_start_and_end_indices(ts, start_time, end_time):
-    start = -1
-    end = -1
-    for i, (_, _, time) in enumerate(ts):
-        if time == start_time:
-            start = i
-        if time == end_time:
-            end == i
-            break
-    return start, end
-
-def truncate_time_series(tss, start, end):
-    #given a list of time series, truncate them based on latest start time and earliest end time
-    print(tss)
-    new_tss = []
-    for ts in tss:
-        start_idx, end_idx = get_start_and_end_indices(ts, start, end)
-        if start_idx == -1 or end_idx == -1:
-            print('Could not a datapoint for the given start and end times. Something is wrong')
-            sys.exit(1)
-        new_tss.append(ts[start_idx:end_idx+1])
-    return new_tss
-'''
-
 def get_all_times_in_window(tss, start, end):
     '''return all the times, in order, between start and end for all time series'''
     times = set()
@@ -98,7 +95,37 @@ def get_all_times_in_window(tss, start, end):
     return times
 
 def get_months(secs):
-    return secs / (60. * 60. * 24. * 30)
+    return secs / (60. * 60. * 24. * 30.)
+
+def fix_date_range(ts, relative_date_range):
+    '''Returns the start and end time stamps of the date range relative to the time series
+    this implementation makes some strong assumptions about the relative date range!'''
+    # assumptions
+    #   the relative date range spans only up to one year, and its start and end are in the same year
+    year = datetime.datetime.fromtimestamp(ts[0][2]).year
+    range_start = relative_date_range.start
+    range_end = relative_date_range.end
+    start = datetime.datetime(year, range_start.month, range_start.day)
+    end = datetime.datetime(year, range_end.month, range_end.day)
+    return time.mktime(start.timetuple()), time.mktime(end.timetuple())
+
+def normalize_time_series_objects(tsos, relative_date_range, interval):
+    # for each time series, we need to interpolate points every interval days over
+    # the course of date range
+    shortest = sys.maxint
+    for tso in tsos:
+        start_timestamp, end_timestamp = fix_date_range(tso.series, relative_date_range)
+        # now we can interpolate for the times:
+        times = np.arange(start_timestamp, end_timestamp + 1., interval*SECS_PER_DAY)
+        if len(times) < shortest:
+            shortest = len(times)
+        new_ts = interpolate_ts(tso.series, times)
+        tso.set_interpolated_series(new_ts)
+
+    # some of the time series may be one or two points longer than another due to a leapyear
+    # or something like that
+    for tso in tsos:
+        tso.interpolated_series = tso.interpolated_series[:shortest]
 
 def normalize_time_series(tss, downsample_factor=None):
     # determine the latest start time and the earliest stop time
@@ -129,6 +156,32 @@ def normalize_time_series(tss, downsample_factor=None):
         new_tss = np.array(new_tss)
 
     return new_tss
+
+
+'''
+def get_start_and_end_indices(ts, start_time, end_time):
+    start = -1
+    end = -1
+    for i, (_, _, time) in enumerate(ts):
+        if time == start_time:
+            start = i
+        if time == end_time:
+            end == i
+            break
+    return start, end
+
+def truncate_time_series(tss, start, end):
+    #given a list of time series, truncate them based on latest start time and earliest end time
+    print(tss)
+    new_tss = []
+    for ts in tss:
+        start_idx, end_idx = get_start_and_end_indices(ts, start, end)
+        if start_idx == -1 or end_idx == -1:
+            print('Could not a datapoint for the given start and end times. Something is wrong')
+            sys.exit(1)
+        new_tss.append(ts[start_idx:end_idx+1])
+    return new_tss
+'''
 
 '''
 if __name__ == '__main__':

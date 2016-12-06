@@ -9,6 +9,7 @@ import os
 
 from preprocess import get_data_by_individual, get_time_series, RelativeDate, RelativeDateRange
 from utils import plot_series
+from interpolation import normalize_time_series_objects
 
 parser = ArgumentParser()
 parser.add_argument('fpath', type=str, action='store',
@@ -31,13 +32,13 @@ print(__doc__)
 parser.print_help()
 print()
 
-def organize(tsos):
+def organize(tsos, interpolated=False):
     '''organizes a list of time series objects into a dictionary'''
     id_to_series = {}
     for tso in tsos:
         if tso.id not in id_to_series:
             id_to_series[tso.id] = []
-        id_to_series[tso.id].append(tso.series)
+        id_to_series[tso.id].append(tso.interpolated_series if interpolated else tso.series)
     return id_to_series
 
 if __name__ == '__main__':
@@ -76,5 +77,23 @@ if __name__ == '__main__':
     print('Plotting Irma\'s latitude over time, after splitting')
     plot_series(irma_series, 2, 1, variable_length=True)
     print()
-    
-    # Do whatever you need to do with them
+
+    # Do whatever else you might need to do with the tsos
+
+    # let's normalize them so that we have one point per day
+    normalize_time_series_objects(tsos, rdr, 0.25)
+
+    # now each tso should have a property interpolated_series that contains its
+    # interpolated points
+    itss = np.array([tso.interpolated_series for tso in tsos])
+
+    print('Shape of all time series after normalization')
+    print(itss.shape)
+    print()
+
+    # let's print Irma's interpolated time series
+    id_to_interpolated_series = organize(tsos, interpolated=True)
+    irma_interpolated_series = id_to_interpolated_series['Irma']
+    print('Plotting Irma\'s latitude over time, after splitting and interpolating')
+    plot_series(irma_interpolated_series, 2, 1)
+    print()
