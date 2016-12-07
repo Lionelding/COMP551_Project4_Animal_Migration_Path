@@ -200,7 +200,7 @@ def split_time_series(indiv_id, time_series, relative_date_range=None, inclusion
                     print('Rejecting series for individual %s' % indiv_id)
                 curr_series = []
         if should_add(curr_series, relative_date_range, inclusion_threshold):
-            split.append(curr_series)
+            split.append(TimeSeries(indiv_id, curr_series))
         else:
             print('Rejecting series for individual %s' % indiv_id)
         return split
