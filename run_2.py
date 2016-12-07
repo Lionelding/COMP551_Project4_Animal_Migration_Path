@@ -59,10 +59,19 @@ if __name__ == '__main__':
     print()
 
     # print a cluster
-    assignments = clusterers[5][2].get_assignments()
-    for centroid, cluster in assignments.iteritems():
+    # best assignment and lowest error for the 6th clusterer (used 6 clusters)
+    best_assignment, lowest_err = clusterers[5][2].get_best_assignment()
+    for centroid, cluster in best_assignment.iteritems():
         print('Centroid %d: ' % centroid.id, end='')
         print([tso.id for tso, _ in cluster])
+        print([tso.year for tso, _ in cluster])
+    print('Error: %f' % lowest_err)
+    print()
+
+
+
+    for _, err in clusterers[5][2].assignments_history:
+        print(err)
     print()
 
     # TODO -- figure out what the best number of clusters is

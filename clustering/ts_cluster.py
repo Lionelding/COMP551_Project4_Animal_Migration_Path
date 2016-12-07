@@ -46,6 +46,7 @@ class TsClusterer(object):
         self.num_clust = num_clust
         self.max_iterations = max_iterations
         self.assignments = {}
+        self.assignments_history = []
         self.centroids = []
         self.stopping_threshold = stopping_threshold
 
@@ -160,6 +161,21 @@ class TsClusterer(object):
                 # update each point in the centroid with the average of all points in the cluster of time
                 # series around the centroid
                 centroid.update(clust_sum, len(self.assignments[centroid]))
+
+        # save the current assignments to history
+        self.save_assignments_to_history()
+
+    def save_assignments_to_history(self):
+        self.assignments_history.append((self.assignments, self.get_assignment_error()))
+
+    def get_best_assignment(self):
+        min_err = float('inf')
+        best_assignment = None
+        for assignment, error in self.assignments_history:
+            if error < min_err:
+                min_err = error
+                best_assignment = assignment
+        return best_assignment, min_err
 
     def get_centroids(self):
         return np.array(self.centroids)

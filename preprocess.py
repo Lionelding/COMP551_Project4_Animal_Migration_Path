@@ -127,6 +127,7 @@ class TimeSeries(object):
         self.id = id
         self.series = np.array(series)
         self.loc_series = extract_lat_and_lon(series)
+        self.year = datetime.datetime.fromtimestamp(self.series[0][2]).year
 
     def set_interpolated_series(self, interpolated_series):
         self.interpolated_series = np.array(interpolated_series)
