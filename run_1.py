@@ -123,8 +123,8 @@ if __name__ == '__main__':
 
     # optionally define a relative date range, e.g.
     if args.rdr:
-        start = RelativeDate(rdr[0], rdr[1])
-        end = RelativeDate(rdr[2], rdr[3])
+        start = RelativeDate(args.rdr[0], args.rdr[1])
+        end = RelativeDate(args.rdr[2], args.rdr[3])
         rdr = RelativeDateRange(start, end)
 
     # get all the time series (splits)
