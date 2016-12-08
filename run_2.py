@@ -11,11 +11,11 @@ import os.path
 import matplotlib.pylab as plt
 
 from preprocess import load
-from interpolation import normalize_time_series
 from utils import make_all_plottable
-
+from cross_validation import CrossValidator
 sys.path.append('./clustering/')
 from ts_cluster import TsClusterer
+from postprocess import to_pickle
 
 ################################################################################
 # logging and options
@@ -27,6 +27,16 @@ logging.basicConfig(level=logging.INFO,
 parser = ArgumentParser()
 parser.add_argument('source_path', type=str, action='store',
                     help='the filepath of the data source file')
+parser.add_argument('--best_n_clusts', type=int, action='store',
+                    help='the number of clusters to consider as the best number')
+parser.add_argument('--norm', type=int, action='store', default=1,
+                    help='the norm to use in DTW; valid values are 1 or 2, for L1 and L2 norms respectively')
+parser.add_argument('--max_iters', type=int, action='store', default=15,
+                    help='the maximum number of centroid updates to use in clustering')
+parser.add_argument('--st', type=float, action='store', default=.05,
+                    help='the stopping threshold to use during clustering')
+parser.add_argument('--print_clusts', type=int, action='store',
+                    help='print the individuals in each cluster, for the given number of clusters')
 
 args = parser.parse_args()
 
@@ -45,6 +55,56 @@ print(__doc__)
 parser.print_help()
 print()
 
+def print_errors(clusterers):
+    '''prints number of clusters vs error'''
+    print('Summary of number of clusters to average error')
+    print('n_clusts\tavg_err')
+    for n_clusts, err, _ in clusterers:
+        print('%d\t%.4f' % (n_clusts, err))
+    print()
+
+def print_clusters(assignments):
+    for centroid, cluster in assignments.iteritems():
+        print('Cluster %d: ' % centroid.id, end='')
+        print([tso.id for tso, _ in cluster])
+    print('Error: %f' % lowest_err)
+    print()
+
+def get_clusterer_for_best_n_clusts(clusterers, best_n_clusts):
+    for n_clusts, err, clusterer in clusterers:
+        if n_clusts == best_n_clusts:
+            return clusterer
+    return None
+
+def sub_cluster(assignments, dist_norm, max_iterations, stopping_threshold):
+    '''for each cluster in assignments, sub-cluster temporally (using Euclidean distance)'''
+    centroid_id_to_clusterers = {}
+    for centroid, cluster in assignments.iteritems():
+        tsos = [tso for tso, _ in cluster]
+        clust_range = [1, len(tsos), 1]
+        n_restarts = 3
+        dist_metric = 'euclidean'
+        clusterers = get_errs_by_num_clusts(clust_range, tsos, 3, dist_metric, dist_norm, max_iterations, stopping_threshold)
+        centroid_id_to_clusterers[centroid.id] = clusterers
+    return centroid_id_to_clusterers
+
+def get_errs_by_num_clusts(clust_range, tsos, n_restarts, dist_metric, dist_norm, max_iterations, stopping_threshold):
+    # Create a cross validator
+    clust_sizes = range(clust_range[0], clust_range[1]+1, clust_range[2])
+    cv =  CrossValidator(n_restarts, tsos)
+    errs = []
+    for n_clusts in clust_sizes:
+        print('-' * 80)
+        print('Number of clusters: %d' % n_clusts)
+        print('_' * 80)
+        # create a clusterer
+        clusterer = TsClusterer(n_clusts, dist_norm, max_iterations, stopping_threshold)
+        avg_err = cv.cross_validate(clusterer, dist_metric)
+        errs.append((n_clusts, avg_err, clusterer))
+        print('Average error of %f achieved using %d clusters' % (avg_err, n_clusts))
+        print()
+    return errs
+
 if __name__ == '__main__':
     print('file path: %s' % args.source_path)
     print()
@@ -52,32 +112,39 @@ if __name__ == '__main__':
     # Load the clusterers
     clusterers = load(args.source_path)
 
-    print('Summary of number of clusters to average error')
-    print('n_clusts\tavg_err')
-    for n_clusts, err, _ in clusterers:
-        print('%d\t%.4f' % (n_clusts, err))
-    print()
+    print_errors(clusterers)
 
-    # print a cluster
-    # best assignment and lowest error for the 6th clusterer (used 6 clusters)
-    best_assignment, lowest_err = clusterers[5][2].get_best_assignment()
-    for centroid, cluster in best_assignment.iteritems():
-        print('Centroid %d: ' % centroid.id, end='')
-        print([tso.id for tso, _ in cluster])
-        print([tso.year for tso, _ in cluster])
-    print('Error: %f' % lowest_err)
-    print()
+    if args.best_n_clusts:
+        print('Getting the clusterer for %d clusters' % args.best_n_clusts)
+        clusterer = get_clusterer_for_best_n_clusts(clusterers, args.best_n_clusts)
+        if not clusterer:
+            print('No clusterer found for %d clusters' % args.best_n_clusts)
+            sys.exit(1)
+        print('Done')
+        print()
+
+        assignments, lowest_err = clusterer.get_best_assignment()
+
+        print('Clusters for the best assignment:')
+        print_clusters(assignments)
+
+        # Cluster temporally within each spatial cluster
+        centroid_id_to_clusterers = sub_cluster(assignments, args.norm, args.max_iters, args.st)
+
+        to_pickle('sub_clusterers', centroid_id_to_clusterers)
+    elif args.print_clusts:
+        clusterer = get_clusterer_for_best_n_clusts(clusterers, args.print_clusts)
+        if not clusterer:
+            print('No clusterer found for %d clusters' % args.print_clusts)
+            sys.exit(1)
+        print('Done')
+        print()
+
+        assignments, lowest_err = clusterer.get_best_assignment()
+
+        print('Clusters:')
+        print_clusters(assignments)
 
 
-
-    for _, err in clusterers[5][2].assignments_history:
-        print(err)
-    print()
-
-    # TODO -- figure out what the best number of clusters is
-
-    # TODO -- for the best number of clusters, get the assignments
-
-    # TODO -- cluster within each cluster temporally!
-
-    # TODO -- analyze the final clusters
+        # TODO -- analyze the final clusters
+        # i.e. print some graphs!!!

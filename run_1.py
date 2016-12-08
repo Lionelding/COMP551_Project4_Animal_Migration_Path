@@ -104,6 +104,23 @@ def get_best_num_clusts_idx(errs, threshold):
         prev_err = curr_err
     return lowest_err_idx
 
+def get_errs_by_num_clusts(clust_range, tsos, n_restarts, dist_metric, dist_norm, max_iterations, stopping_threshold):
+    # Create a cross validator
+    clust_sizes = range(clust_range[0], clust_range[1]+1, clust_range[2])
+    cv =  CrossValidator(n_restarts, tsos)
+    errs = []
+    for n_clusts in clust_sizes:
+        print('-' * 80)
+        print('Number of clusters: %d' % n_clusts)
+        print('_' * 80)
+        # create a clusterer
+        clusterer = TsClusterer(n_clusts, dist_norm, max_iterations, stopping_threshold)
+        avg_err = cv.cross_validate(clusterer, dist_metric)
+        errs.append((n_clusts, avg_err, clusterer))
+        print('Average error of %f achieved using %d clusters' % (avg_err, n_clusts))
+        print()
+    return errs
+
 if __name__ == '__main__':
 
     # get a map of individual id to all its data, ordered by time
@@ -171,7 +188,7 @@ if __name__ == '__main__':
 
     # cluster all the time series objects
     if args.clust_range:
-        errs = get_errs_by_num_clusts(args.clust_range, tsos, 3, args.norm, args.max_iters, args.st)
+        errs = get_errs_by_num_clusts(args.clust_range, tsos, 3, 'dtw', args.norm, args.max_iters, args.st)
 
         print('Summary of number of clusters to average error')
         print('n_clusts\tavg_err')

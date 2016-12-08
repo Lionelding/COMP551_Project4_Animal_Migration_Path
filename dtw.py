@@ -1,8 +1,7 @@
 from numpy import array, zeros, argmin, inf
 from numpy.linalg import norm
 
-
-def dtw(x, y, dist=lambda x, y: norm(x - y, ord=1)):
+def dtw(x, y, dist=lambda x, y: norm(x - y, ord=1), w=None):
     """ Computes the DTW of two sequences.
 
     :param array x: N1*M array
@@ -30,11 +29,16 @@ def dtw(x, y, dist=lambda x, y: norm(x - y, ord=1)):
             D[i+1, j+1] = dist(x[i], y[j])
 
     for i in range(r):
-        for j in range(c):
-            D[i+1, j+1] += min(D[i, j], D[i, j+1], D[i+1, j])
+        if w:
+            for j in range(max(0, i - w), min(c, i + w)):
+                D[i+1, j+1] += min(D[i, j], D[i, j+1], D[i+1, j])
+        else:
+            for j in range(c):
+                D[i+1, j+1] += min(D[i, j], D[i, j+1], D[i+1, j])
 
     D = D[1:, 1:]
 
+    # divides by sum(D.shape so that the distance is normalized by the number of points in both series combined)
     dist = D[-1, -1] / sum(D.shape)
 
     return dist, D, _trackeback(D)

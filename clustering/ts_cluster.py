@@ -1,4 +1,4 @@
-'''uses dtw package DTW implementation'''
+'''uses dynamic time warping and euclidean distance to cluster series'''
 from __future__ import print_function
 
 import matplotlib.pylab as plt
@@ -50,30 +50,15 @@ class TsClusterer(object):
         self.centroids = []
         self.stopping_threshold = stopping_threshold
 
-    # Euclidean distance measures -- to be continued TODO -- finish/use this later
-
-    def point_dist(self, x1, x2):
-        '''returns the distance between two points in 2d'''
-        return math.sqrt((x1[0] - x2[0])**2 + (x1[1] - x2[1])**2)
-
-    def seq_dist(self, s1, s2):
-        '''returns the total Euclidean distance between two series'''
-        pass
-
-    def error(self):
-        '''returns the mean squared error of the assignments with respect to the centroids'''
-        total = 0.
-        for i, c in enumerate(self.centroids):
-            clust = self.assignments[i]
-            for s_idx, _ in clust:
-                total += seq_dist(self.data[s_idx], c)**2
-        return total / self.num_time_series
-
-    # end Euclidean distance stuff
+    def euclidean_dist(self, series, centroid_series):
+        dist = 0.
+        for i in range(len(series)):
+            dist += self.dist_norm(series[i], centroid_series[i])
+        return dist
 
     def get_assignment_error(self):
-        '''returns the total assignment error, which is equal to the average DTW distance
-        between a time series and its centroid'''
+        '''returns the total assignment error, which is equal to the average distance
+        between each time series in a cluster and the cluster's centroid'''
         total = 0.
         for _, cluster in self.assignments.iteritems():
             for _, dist in cluster:
@@ -97,11 +82,23 @@ class TsClusterer(object):
 
     # goal: change assignments to be a map from Centroid object to list of TSOs
     # each centroid is a line, rather than a point!!!
-    def k_means_clust(self, tsos, verbose=False):
+    def k_means_clust(self, tsos, distance_metric='dtw', verbose=False):
         '''
         k-means clustering algorithm for time series data. dynamic time warping Euclidean distance
         used as default similarity measure.
+        valid distance metrics are 'dtw' or 'euclidean'
         '''
+        if distance_metric not in ['dtw', 'euclidean']:
+            print('Unrecognized distance metric `%s`' % distance_metric)
+            return
+
+        if verbose:
+            if distance_metric == 'dtw':
+                print('Clustering using dynamic time warping')
+            else:
+                print('Clustering using Euclidean distance')
+            print()
+
         self.tsos = tsos
         self.num_time_series = len(tsos)
         centroid_tsos = random.sample(tsos, self.num_clust)
@@ -123,7 +120,10 @@ class TsClusterer(object):
                 # define the closest centroid
                 closest_centroid = None
                 for centroid in self.centroids:
-                    cur_dist, matrix, path = dtw(tso.interpolated_loc_series, centroid.loc_series, dist=self.dist_norm)
+                    if distance_metric == 'dtw':
+                        cur_dist, _, _ = dtw(tso.interpolated_loc_series, centroid.loc_series, dist=self.dist_norm)
+                    else:
+                        cur_dist = self.euclidean_dist(tso.interpolated_loc_series, centroid.loc_series)
                     if cur_dist < min_dist:
                         min_dist = cur_dist
                         closest_centroid = centroid

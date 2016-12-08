@@ -8,12 +8,12 @@ class CrossValidator(object):
         self.n_restarts = n_restarts
         self.tsos = tsos
 
-    def cross_validate(self, clusterer):
+    def cross_validate(self, clusterer, distance_metric):
         '''Clusters the time series objects using the clusterer n_restarts times
         recording the error obtained each time. Returns the average error.'''
         errs = []
         for i in range(self.n_restarts):
-            clusterer.k_means_clust(self.tsos, verbose=True)
+            clusterer.k_means_clust(self.tsos, distance_metric=distance_metric, verbose=True)
             err = clusterer.get_assignment_error()
             print('Clustering error for attempt #%d: %f' % (i, err))
             print()
