@@ -21,17 +21,22 @@ def dtw(x, y, dist=lambda x, y: norm(x - y, ord=1), w=None):
     r, c = len(x), len(y)
 
     D = zeros((r + 1, c + 1))
-    D[0, 1:] = inf
-    D[1:, 0] = inf
-
-    for i in range(r):
-        for j in range(c):
-            D[i+1, j+1] = dist(x[i], y[j])
+    if w:
+        w = max(w, abs(r - c))
+        D[:, :] = inf
+        D[0, 0] = 0.
+    else:
+        D[0, 1:] = inf
+        D[1:, 0] = inf
+        for i in range(r):
+            for j in range(c):
+                D[i+1, j+1] = dist(x[i], y[j])
 
     for i in range(r):
         if w:
             for j in range(max(0, i - w), min(c, i + w)):
-                D[i+1, j+1] += min(D[i, j], D[i, j+1], D[i+1, j])
+                d = dist(x[i], y[j])
+                D[i+1, j+1] = dist + min(D[i, j], D[i, j+1], D[i+1, j])
         else:
             for j in range(c):
                 D[i+1, j+1] += min(D[i, j], D[i, j+1], D[i+1, j])
