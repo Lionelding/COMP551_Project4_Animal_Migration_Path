@@ -36,7 +36,7 @@ def dtw(x, y, dist=lambda x, y: norm(x - y, ord=1), w=None):
         if w:
             for j in range(max(0, i - w), min(c, i + w)):
                 d = dist(x[i], y[j])
-                D[i+1, j+1] = dist + min(D[i, j], D[i, j+1], D[i+1, j])
+                D[i+1, j+1] = d + min(D[i, j], D[i, j+1], D[i+1, j])
         else:
             for j in range(c):
                 D[i+1, j+1] += min(D[i, j], D[i, j+1], D[i+1, j])
