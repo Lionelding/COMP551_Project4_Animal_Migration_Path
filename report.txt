@@ -1,0 +1,130 @@
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}
+
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{comment}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage[super]{nth}
+\usepackage{float}
+\usepackage{url}
+\usepackage{subfig}
+\usepackage{array,booktabs}
+\usepackage[colorinlistoftodos]{todonotes}
+
+\title{\LARGE \bf
+Clustering of Animal Migration Paths\\
+}
+\author{Keith Strickling, 260674699, keith.strickling@mail.mcgill.ca\\
+Alba Xifra Porxas, 260678352, alba.xifraporxas@mail.mcgill.ca\\
+Liqiang Ding, 260457392, Liqiang.ding@mail.mcgill.ca
+}
+\begin{document}
+\maketitle
+\thispagestyle{plain}
+\pagestyle{plain}
+
+\section{Introduction}
+
+
+As machine learning techniques get intensively applied and used in various areas, an increasing number of cases shows that many new insights can be extracted given a large amount of numeric data. The techniques not only are able to give more profound explanations on what already has been discovered, but also able to deliver some new predictions to some extent.
+
+\todo[inline]{I am not sure what you mean in the above paragraph. Perhaps something along the lines of "machine learning is being applied to more and more problems... and here we are using it to cluster animal migrations!"...}
+
+In this paper, we would like to apply the concept of dynamic time warping along with different data clustering techniques to have a better understanding of the animal migration behavior in terms of their paths, based on the data from the movebank.org [Ref]. There are two main objectives that we want to concentrate on. Initially, we would like to cluster multiple animal paths for a given year. More specific, we are interested in investigating if all individual within a species tend to migrate along the same path or different paths? Do they migrate in groups or individually? Do they migrate at the same time or different times? Secondly, we also focus on clustering paths for a given animal over many years. In detail, we would like to answer if migration routes of the individual tend to be consistent over years? In addition, we would like to perform data clustering on both objectives above temporally and spatially, and detect any outliers if possible.
+
+\todo[inline]{In this paper, we present methodologies for clusering animal migration paths both temporally and spatially. The methods we propose are not limited to any given migrating species, however for the sake of demonstration we present the results for their application to turkey vulture migration in North and South America. Turkey vultures were selected as they are known to migrate along several distinct spatial paths, as shown in Figure 1, making them a good choice for demonstrating the efficacy of our clustering methods, at least as far as spatial clustering goes. In addition, nearly 10 years of migration data is available for the species on the online Movebank database [www.movebank.org].
+
+Our clustering objectives are two-fold. Firstly, we would like to cluster migration paths for many individuals over the course of a single year. Such clustering allows researchers to easily identify different groups within a species on a year-to-year basis. Without ever looking at points plotted on a map, one can answer questions such as: Do all individuals within a species tend to migrate along the same routs or different routes? Do they migrate in groups or individually? Do they migrate at the same time or at different times? Secondly, we wish to cluster the migration paths for a specific individual over the course of many years, thus allowing researchers to trivially discover how the migration of an individual may be changing (or not changing) over many years. Though such questions are rather simple in nature, their answers can have more significant implications, e.g. if a species is forced to alter its migration due to climate change or new human activity in a region.
+
+As a fringe benefit, clustering paths also allows for the easy identification of outliers.}
+
+\todo[inline]{add Figure 1}
+
+In order to solve these two problems efficiently and accurately, we designed a model which is able to cluster migration paths for multiple animals of one species over multiple years, given the dataset of a particular species. Then, we analyzed the results and plots in a quantitative and qualitative manners, to answers the two questions asked.
+
+\todo[inline] {
+In order to solve these two problems efficiently and accurately, we developed two clustering methodologies, both centered around dynamic time warping. After discussing related work (Section 2) and our formulation of the clustering problem (Section 3), we outline these methods (Section 3), before applying them to the turkey vulture data and presenting the results (Section 4). Section 5 consists of a discussion of the results. Section 6 concludes the report with limitations of our methods and future improvements. }
+
+\section{Related Work}
+Working
+
+Migration routes of animals are recorded as numerous plots in an organized time sequence. In order to cluster their migration paths temporally and spatially and find any possible outliers, we would like to utilize the concept of dynamic time warping method. As far as we know, there have been no other attempts to cluster migration paths in this way.
+
+Dynamic time warping (DTW) is a dynamic programming algorithm capable of detecting similarities between two temporal sequences which may vary in speed [Ref]. Its advantage over other, more naive, similarity measures such as Euclidean distance is that it is time independent. In other words, if two sequences share similarities in their "shapes" but these similarities occur at different times, dynamic time warping will still recognize them as similar. In essence, it comes in two forms: full and windowed DTW. In either case, it identifies an optimal point-wise matching between two sequences such as to minimize their "distance" from one another. In full DTW, the entirety of each sequence is scanned for a match, whereas in windowed DTW matches are limited to a window around the current point. Any data which can be modeled as a sequence can be analyzed and modeled by this method. In practice, DTW is perhaps well known for its use in speech recognition, though it has also been applied to video and audio analysis, as well as used in a variety of data mining applications.
+
+In the research study of speech recognition, the technique of dynamic programming has found widespread use in the area of isolated word recognition.
+
+\section{Problem Formulation}
+At the beginning of the project, we planned to cluster the migration routes of multiple animals over one year and routes of an individual animal over multiple years separately. This would provide us a very straightforward and intuitive way to visualize how multiple animals of one species migrate over multiple years.
+
+\todo[inline]{As mentioned in the Introduction, we wish to be able to cluster both all individuals for any given year as well as all years for any given individual. Doing so provides us a straightforward and intuitive way to visualize how migrations of multiple individuals compare on a year-to-year basis, as well as how migrations of a single individual vary over time. This leads us to the following idea: why don't we split the data into subsets of data by year and of data by individual and cluster each separately?}
+
+However, there are a few limitations of such a method. Initially, one of the limitations is that the entire dataset is not fully utilized in either objectives. In detail, when multiple animal migration paths over each year are compared, the dataset of certain animals is not in the same year as others. For example, in the dataset of Turkey Vultures migration routes, some of the vultures only have the full year migration information in 2008, whereas the rest of the animals have the full year migration information in 2009. Even though the time length of the dataset is the same, they can not be compared and further clustered due to they are not the same year. This results in a huge waste of our data resource. Secondly, the original plan is not efficient enough. In order to answer both questions raised, we have to design two separate methods to run through the same dataset. In terms of implementation details, there are many common parts between both methods. Implementing two methods separately would be considered as waste of time.
+
+\todo[inline]{However, there are a few limitations of such a method. The first is perhaps best evinced by Figure 2. As the figure depicts, although the turkey vulture data spans approximated 10 years in total, for any given individual we may only have a few years or less worth of data. Thus, even though the dataset contains data for 19 different individuals, at any given point in time we have locations for at most nine of them. This leaves us very few series with which to cluster in any given year, making clustering prone to overfitting (Why? Though two paths may be relatively similar in the universe of possible paths, without an appreciable number of other paths to compare them to we might conclude that they are different). Furthermore, we would be even less inclined to attempt clustering paths for years for which we have data for even fewer individual, resulting in the discarding of data for these years - this is a significant waste of our already-limited data resource! As for clustering migration paths for a single individual over many years, for any given turkey vulture we have at most six years worth of data. Again, this leaves us prone to overfitting. Secondly, the method lacks in simplicity. It results in many different clusters for many different individuals and years, making comparing any two or more sets of clusters inconvenient and inefficient.}
+
+\todo[inline]{insert figure 2}
+
+Therefore, we migrated the two methods into one and designed a single model to answer two objectives at the same time. The model is able to extract information from the entire dataset and separate it into many elementary units. Each unit is the migration data per animal per year. For example, if one vulture has three year migration data, the model would generate 3 elementary units for that vulture. In order to compare elementary units in terms of time, the model uses the relative time respective to the beginning of each elementary unit. By doing this way, the dynamic time warping techniques can still be used. The new model is much more flexible than before, and is able to cluster horizontally (multiple years of a certain animal) and cluster vertically (multiple animals over one year) together. Below are the detailed implementation of our model.
+
+\todo[inline]{Therefore, we "migrated" the two methods into one and designed a single method to meet our two objectives simultaneously. The method works as follows. For each individual, partition its datapoints into years. For example, if one turkey vulture has three years' worth of migration data, the method would divide this data into three separate time series. Take all resulting time series and cluster them.
+
+The result is a simple and efficient method that wastes no data and is able to cluster both horizontally (multiple years of a certain animal) and vertically (multiple animals over one year) at once. The following section provides greater detail on this method of treating the data, and introduces the clustering methods used. }
+
+\section{Methodology}
+
+\subsection{Data pre-processing}
+\subsection{Interpolation}
+
+\todo[inline]{This is a good point - I just moved it from the above section to here, since it pertains to interpolation}
+
+In order to compare elementary units in terms of time, the model uses the relative time respective to the beginning of each elementary unit. By doing this way, the dynamic time warping techniques can still be used.
+
+\subsection{Distance metrics}
+\subsection{Clustering approach: k-means}
+\subsection{Clustering approach: hierarchical clustering}
+The second method we implemented is hierarchical clustering. We apply an agglomerative approach, in which each example starts in its own cluster (in our case a migration path for a given animal and year). Subsequently, as you move up the tree, clusters are combined together in pairs. Finally, when only one cluster remains, this cluster becomes the root of the tree. The final rooted tree is usually called a dendrogram. It is a diagram that illustrates the cluster arrangement constructed by hierarchical clustering.
+
+Dynamic time warping is used as the metric of distance to measure similarity between clusters. Regarding the linkage criteria, two clusters are combined together into a higher-level cluster using the UPGMA method \cite{upgma}. At each clustering step, this method computes the distance between two clusters by taking the average of all distances between examples of the two clusters that will potentially be merged.
+
+Concerning the choice of how to select the number of clusters to be kept, there is no gold standard procedure. We decided to use the silhouette score, which is computed as follows: $$\frac{b-a}{max(a,b)}$$ where $a$ is the average intra-cluster distance, and $b$ is the average distance to the nearest cluster for each example within a cluster. The highest silhouette score is 1 and the lowest is -1. Values around 0 indicate overlapping clusters.
+
+We used the Scipy package for hierarchical clustering to implement this method (scipy.cluster.hierarchy) \cite{scipy}. We computed the silhouette score using Scikit Learn's implementation of it (sklearn.metrics.silhouette$\_$score) \cite{sklearn}.
+
+\section{Results}
+We applied our methodology to the dataset: ``Turkey vultures in North and South America" \cite{dodge} \cite. This dataset includes migrations from 19 birds within 2005 and 2012. However, data is not available for all years from all individuals.
+
+\subsection{k-means clustering}
+
+\subsection{Hierarchical clustering}
+
+\section{Discussion}
+
+Should compare and contrast the two methods.
+
+\subsection{Advantages}
+% One advantage of hierarchical clustering is that it only requires a matrix of pairwise similarity measures in order to construct the tree. However, agglomerative clustering is computationally expensive for large data sets ($O(n^2log(n))$). Further, when a new example arrives, ideally the hierarchical tree should be computed again. This may be time consuming, specially if you are interested in online tracking and clustering in real time.
+
+\subsection{Limitations and Future Improvements}
+There are a few improvements that can be made in order to overcome the limitation of the model. Initially, in order to improve the accuracy and remove some redundant data, we can partition the data based on the animal nature behavior. Instead of performing clustering on the full year scale, we can partition the migration paths in terms of seasons. For example, the vultures mainly migrate from October to November and from March to May each year. They are less expected to migrate for the rest of the year. The current model will cluster the dataset of the entire year, which takes redundant data points into account and results in smoothing the overall results. In order to be more precise, we can even partition migration data into south and north given more time.
+
+\section{Statement of Contributions}
+
+We hereby state that all the work presented in this report is that of the authors.
+
+\begin{thebibliography}{99}
+\bibitem{upgma} Sokal, RR and Michener, CD. “A statistical method for evaluating systematic relationships.” Scientific Bulletins. 38(22): pp. 1409–38. 1958.
+\bibitem{scipy} Jones E, Oliphant E, Peterson P, et al. SciPy: Open Source Scientific Tools for Python, 2001-, \url{http://www.scipy.org/} [Online; accessed 2016-11-24].
+\bibitem{sklearn} Pedregosa, F. et al., Scikit-learn: Machine Learning in Python, JMLR 12, pp. 2825-2830, 2011.
+\bibitem{dodge} Dodge S, Bohrer G, Bildstein K, Davidson SC, Weinzierl R, Mechard MJ, Barber D, Kays R, Brandes D, Han J (2014) Environmental drivers of variability in the movement ecology of turkey vultures (Cathartes aura) in North and South America. Philosophical Transactions of the Royal Society B 20130195. doi:10.1098/rstb.2013.0195
+\bibitem{mbdata} Bildstein K, Barber D, Bechard MJ (2014) Data from: Environmental drivers of variability in the movement ecology of turkey vultures (Cathartes aura) in North and South America. Movebank Data Repository. doi:10.5441/001/1.46ft1k05
+\end{thebibliography}
+
+
+\end{document}

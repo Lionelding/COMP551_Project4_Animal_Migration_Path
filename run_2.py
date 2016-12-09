@@ -37,6 +37,8 @@ parser.add_argument('--st', type=float, action='store', default=.05,
                     help='the stopping threshold to use during clustering')
 parser.add_argument('--print_clusts', type=int, action='store',
                     help='print the individuals in each cluster, for the given number of clusters')
+parser.add_argument('--window', type=int, action='store',
+                    help='If set, DTW with windowing will be used rather than Euclidean distance. The window used will be twice the value passed.')
 
 args = parser.parse_args()
 
@@ -76,19 +78,18 @@ def get_clusterer_for_best_n_clusts(clusterers, best_n_clusts):
             return clusterer
     return None
 
-def sub_cluster(assignments, dist_norm, max_iterations, stopping_threshold):
+def sub_cluster(assignments, dist_metric, window, dist_norm, max_iterations, stopping_threshold):
     '''for each cluster in assignments, sub-cluster temporally (using Euclidean distance)'''
     centroid_id_to_clusterers = {}
     for centroid, cluster in assignments.iteritems():
         tsos = [tso for tso, _ in cluster]
         clust_range = [1, len(tsos), 1]
         n_restarts = 3
-        dist_metric = 'euclidean'
-        clusterers = get_errs_by_num_clusts(clust_range, tsos, 3, dist_metric, dist_norm, max_iterations, stopping_threshold)
+        clusterers = get_errs_by_num_clusts(clust_range, tsos, 3, dist_metric, window, dist_norm, max_iterations, stopping_threshold)
         centroid_id_to_clusterers[centroid.id] = clusterers
     return centroid_id_to_clusterers
 
-def get_errs_by_num_clusts(clust_range, tsos, n_restarts, dist_metric, dist_norm, max_iterations, stopping_threshold):
+def get_errs_by_num_clusts(clust_range, tsos, n_restarts, dist_metric, window, dist_norm, max_iterations, stopping_threshold):
     # Create a cross validator
     clust_sizes = range(clust_range[0], clust_range[1]+1, clust_range[2])
     cv =  CrossValidator(n_restarts, tsos)
@@ -99,7 +100,7 @@ def get_errs_by_num_clusts(clust_range, tsos, n_restarts, dist_metric, dist_norm
         print('_' * 80)
         # create a clusterer
         clusterer = TsClusterer(n_clusts, dist_norm, max_iterations, stopping_threshold)
-        avg_err = cv.cross_validate(clusterer, dist_metric)
+        avg_err = cv.cross_validate(clusterer, distance_metric=dist_metric, window=window)
         errs.append((n_clusts, avg_err, clusterer))
         print('Average error of %f achieved using %d clusters' % (avg_err, n_clusts))
         print()
@@ -129,7 +130,11 @@ if __name__ == '__main__':
         print_clusters(assignments)
 
         # Cluster temporally within each spatial cluster
-        centroid_id_to_clusterers = sub_cluster(assignments, args.norm, args.max_iters, args.st)
+        if args.window:
+            dist_metric = 'dtw'
+        else:
+            dist_metric = 'euclidean'
+        centroid_id_to_clusterers = sub_cluster(assignments, dist_metric, args.window, args.norm, args.max_iters, args.st)
 
         to_pickle('sub_clusterers', centroid_id_to_clusterers)
     elif args.print_clusts:

@@ -82,7 +82,7 @@ class TsClusterer(object):
 
     # goal: change assignments to be a map from Centroid object to list of TSOs
     # each centroid is a line, rather than a point!!!
-    def k_means_clust(self, tsos, distance_metric='dtw', verbose=False):
+    def k_means_clust(self, tsos, distance_metric='dtw', window=None, verbose=False):
         '''
         k-means clustering algorithm for time series data. dynamic time warping Euclidean distance
         used as default similarity measure.
@@ -94,7 +94,10 @@ class TsClusterer(object):
 
         if verbose:
             if distance_metric == 'dtw':
-                print('Clustering using dynamic time warping')
+                if window:
+                    print('Clustering using dynamic time warping and a window size of %d' % window)
+                else:
+                    print('Clustering using dynamic time warping with no window')
             else:
                 print('Clustering using Euclidean distance')
             print()
@@ -121,7 +124,7 @@ class TsClusterer(object):
                 closest_centroid = None
                 for centroid in self.centroids:
                     if distance_metric == 'dtw':
-                        cur_dist, _, _ = dtw(tso.interpolated_loc_series, centroid.loc_series, dist=self.dist_norm)
+                        cur_dist, _, _ = dtw(tso.interpolated_loc_series, centroid.loc_series, dist=self.dist_norm, w=window)
                     else:
                         cur_dist = self.euclidean_dist(tso.interpolated_loc_series, centroid.loc_series)
                     if cur_dist < min_dist:

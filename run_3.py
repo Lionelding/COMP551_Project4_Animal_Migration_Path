@@ -11,7 +11,7 @@ import os.path
 import matplotlib.pylab as plt
 
 from preprocess import load
-from utils import make_all_plottable
+from utils import Plottable, plot
 sys.path.append('./clustering/')
 from ts_cluster import TsClusterer
 
@@ -58,6 +58,26 @@ def print_all_errors(centroid_id_to_clusterers):
         print('_' * 40)
         print_errors(clusterers)
 
+def get_plottable(clusterers, name):
+    for n_clusts, err, _ in clusterers:
+        print('%d\t%.4f' % (n_clusts, err))
+
+class TemporalClusteringCandidate(object):
+    '''An object to make dealing with the data a bit nicer'''
+
+    def __init__(self, n_clusts, avg_err, clusterer):
+        self.n_clusts = n_clusts
+        self.avg_err = avg_err
+        self.clusterer = clusterer
+
+def reformat(centroid_id_to_clusterers):
+    dic = {}
+    for spatial_clust_id, cands in centroid_id_to_clusterers.iteritems():
+        dic[spatial_clust_id] = []
+        for n_clusts, err, clusterer in cands:
+            dic[spatial_clust_id].append(TemporalClusteringCandidate(n_clusts, err, clusterer))
+    return dic
+
 if __name__ == '__main__':
     print('file path: %s' % args.source_path)
     print()
@@ -67,9 +87,23 @@ if __name__ == '__main__':
 
     print_all_errors(centroid_id_to_clusterers)
 
-    # TODO implement windowing for euclidean distance -- well, this is dynamic time warping (with windowing)!!!
-    # Try temporal clustering using windowing :) (augment run_2 to allow for windowing as an option - will need to
-    # modify k_means_clust so that windowing is an option)
+    # convert to TemporalCandidate objects
+    # centroid id really represents a spatial cluster so...
+    spatial_cluster_to_temporal_candidates = reformat(centroid_id_to_clusterers)
 
-    # TODO -- analyze the final clusters
-    # i.e. print some graphs!!!
+    # plot all the errors
+    plottables = []
+    for spatial_clust_id, cands in spatial_cluster_to_temporal_candidates.iteritems():
+        n_clusts = []
+        errs = []
+        for cand in cands:
+            n_clusts.append(cand.n_clusts)
+            errs.append(cand.avg_err)
+        plottables.append(Plottable(n_clusts, errs, 'spatial cluster %d' % spatial_clust_id))
+
+    # plot them one at a time
+    for plottable in plottables:
+        plot(plottable, 'number of clusters', 'error (avg Euclidean distance)', 'number of clusters vs. error for temporal clustering in %s' % plottable.name)
+
+    # plot them together
+    plot(plottables, 'number of clusters', 'error (avg Euclidean distance)', 'number of clusters vs. error for temporal clustering in all spatial clusters')

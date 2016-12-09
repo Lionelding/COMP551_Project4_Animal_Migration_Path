@@ -14,9 +14,10 @@ import matplotlib.pylab as plt
 
 class Plottable(object):
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, name=None):
         self.x = x
         self.y = y
+        self.name = name
 
 def make_plottable(ts, x_idx=0, y_idx=10):
     x, y = [pt[x_idx] for pt in ts], [pt[y_idx] for pt in ts]
@@ -37,6 +38,17 @@ def plot_series(ss, x_idx=0, y_idx=1, variable_length=False):
         plottables = [make_plottable(ss, x_idx, y_idx)]
     for plble in plottables:
         plt.plot(plble.x, plble.y)
+    plt.show()
+
+def plot(plottables, x_label, y_label, title):
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    if type(plottables) == list:
+        for plottable in plottables:
+            plt.plot(plottable.x, plottable.y, label=plottable.name)
+    else:
+        plt.plot(plottables.x, plottables.y)
     plt.show()
 
 ################################################################################

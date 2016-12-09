@@ -43,7 +43,7 @@ def dtw(x, y, dist=lambda x, y: norm(x - y, ord=1), w=None):
 
     D = D[1:, 1:]
 
-    # divides by sum(D.shape so that the distance is normalized by the number of points in both series combined)
+    # divides by sum(D.shape) so that the distance is normalized by the number of points in both series combined
     dist = D[-1, -1] / sum(D.shape)
 
     return dist, D, _trackeback(D)
