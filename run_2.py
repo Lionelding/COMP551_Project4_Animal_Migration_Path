@@ -11,7 +11,7 @@ import os.path
 import matplotlib.pylab as plt
 
 from preprocess import load
-from utils import make_all_plottable
+from utils import make_all_plottable, plot, Plottable
 from cross_validation import CrossValidator
 sys.path.append('./clustering/')
 from ts_cluster import TsClusterer
@@ -65,6 +65,15 @@ def print_errors(clusterers):
         print('%d\t%.4f' % (n_clusts, err))
     print()
 
+def plot_errors(clusterers):
+    n_clusts = []
+    errs = []
+    for n, err, _ in clusterers:
+        n_clusts.append(n)
+        errs.append(err)
+
+    plot(Plottable(n_clusts, errs), 'number of clusters', 'error (avg DTW distance)')
+
 def print_clusters(assignments):
     for centroid, cluster in assignments.iteritems():
         print('Cluster %d: ' % centroid.id, end='')
@@ -88,6 +97,36 @@ def sub_cluster(assignments, dist_metric, window, dist_norm, max_iterations, sto
         clusterers = get_errs_by_num_clusts(clust_range, tsos, 3, dist_metric, window, dist_norm, max_iterations, stopping_threshold)
         centroid_id_to_clusterers[centroid.id] = clusterers
     return centroid_id_to_clusterers
+
+def plot_centroids(assignments):
+    plottables = []
+    centroids = []
+    for centroid, _ in assignments.iteritems():
+        centroids.append(centroid)
+    centroids.sort(key=lambda c: c.id)
+    for centroid in centroids:
+        loc_series = centroid.loc_series
+        x = [pt[0] for pt in loc_series]
+        y = [pt[1] for pt in loc_series]
+        plottables.append(Plottable(x, y, name='centroid %d' % centroid.id))
+    plot(plottables, 'longitude', 'latitude', legend=True)
+
+def plot_clusters(assignments):
+    clusters = []
+    for centroid, cluster in assignments.iteritems():
+        clusters.append((centroid.id, cluster))
+    clusters.sort(key=lambda c: c[0])
+    plottables = []
+    colors = ['b', 'g', 'r', 'c', 'm']
+    cluster_sizes = []
+    for id, cluster in clusters:
+        cluster_sizes.append(len(cluster))
+        for tso, _ in cluster:
+            loc_series = tso.interpolated_loc_series
+            x = [pt[0] for pt in loc_series]
+            y = [pt[1] for pt in loc_series]
+            plottables.append(Plottable(x, y, color=colors[id]))
+    plot(plottables, 'longitude', 'latitude', color=True, cluster_sizes=cluster_sizes)
 
 def get_errs_by_num_clusts(clust_range, tsos, n_restarts, dist_metric, window, dist_norm, max_iterations, stopping_threshold):
     # Create a cross validator
@@ -115,6 +154,8 @@ if __name__ == '__main__':
 
     print_errors(clusterers)
 
+    plot_errors(clusterers)
+
     if args.best_n_clusts:
         print('Getting the clusterer for %d clusters' % args.best_n_clusts)
         clusterer = get_clusterer_for_best_n_clusts(clusterers, args.best_n_clusts)
@@ -128,6 +169,10 @@ if __name__ == '__main__':
 
         print('Clusters for the best assignment:')
         print_clusters(assignments)
+
+        plot_centroids(assignments)
+
+        plot_clusters(assignments)
 
         # Cluster temporally within each spatial cluster
         if args.window:
@@ -149,7 +194,3 @@ if __name__ == '__main__':
 
         print('Clusters:')
         print_clusters(assignments)
-
-
-        # TODO -- analyze the final clusters
-        # i.e. print some graphs!!!

@@ -9,6 +9,7 @@ import sys
 from time import time
 import os.path
 import matplotlib.pylab as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 from preprocess import load
 from utils import Plottable, plot
@@ -78,6 +79,40 @@ def reformat(centroid_id_to_clusterers):
             dic[spatial_clust_id].append(TemporalClusteringCandidate(n_clusts, err, clusterer))
     return dic
 
+def get_cand(candidates, n_clusts):
+    for cand in candidates:
+        if cand.n_clusts == n_clusts:
+            return cand
+    return None
+
+def get_final_clustering(s_clust_to_t_cands, n_clusts):
+    final_clustering = {}
+    for spatial_clust_id, temporal_candidates in s_clust_to_t_cands.iteritems():
+        final_clustering[spatial_clust_id] = {}
+        best_n_clusts = n_clusts[spatial_clust_id]
+        cand = get_cand(temporal_candidates, best_n_clusts)
+        if cand:
+            clusterer = cand.clusterer
+            assignments, _ = clusterer.get_best_assignment()
+            i = 0
+            for _, cluster in assignments.iteritems():
+                tsos = [tso for tso, _ in cluster]
+                final_clustering[spatial_clust_id][i] = tsos
+                i += 1
+        else:
+            print('Error')
+            sys.exit(1)
+    return final_clustering
+
+def print_clusters(final_clustering):
+    for spatial_clust_id, temporal_clusts in final_clustering.iteritems():
+        print('>>>>>>spatial clust %d' % spatial_clust_id)
+        for temporal_clust_id, tsos in temporal_clusts.iteritems():
+            print('>>>temporal clust %d' % temporal_clust_id)
+            for tso in tsos:
+                print('%s_%d' % (tso.id, tso.year), end=', ')
+            print()
+
 if __name__ == '__main__':
     print('file path: %s' % args.source_path)
     print()
@@ -103,7 +138,74 @@ if __name__ == '__main__':
 
     # plot them one at a time
     for plottable in plottables:
-        plot(plottable, 'number of clusters', 'error (avg Euclidean distance)', 'number of clusters vs. error for temporal clustering in %s' % plottable.name)
+        plot(plottable, 'number of clusters', 'error (avg DTW distance)', 'number of clusters vs. error for temporal clustering in %s' % plottable.name)
 
     # plot them together
-    plot(plottables, 'number of clusters', 'error (avg Euclidean distance)', 'number of clusters vs. error for temporal clustering in all spatial clusters')
+    plot(plottables, 'number of clusters', 'error (avg DTW distance)', legend=True)
+
+    # use two temporal clusters for spatial cluster 0, 1, 2, 4, and 3 for spatial cluster 3
+
+    # get the final clustering
+    n_clusts = [2,2,2,3,2]
+    final_clustering = get_final_clustering(spatial_cluster_to_temporal_candidates, n_clusts)
+
+    total = 0
+    for spatial_clust_id, temporal_clusts in final_clustering.iteritems():
+        for temporal_clust_id, tsos in temporal_clusts.iteritems():
+            print(len(tsos))
+            total += len(tsos)
+    print(total)
+
+    print_clusters
+
+    # select two lines in the same temporal cluster and plot them
+    one = final_clustering[0][0][2]
+    two = final_clustering[0][0][3]
+    one.time_normalize()
+    two.time_normalize()
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+
+    x = [lon for lon, _, _ in one.normalized_interpolated_series]
+    y = [lat for _, lat, _ in one.normalized_interpolated_series]
+    z = [time for _, _, time in one.normalized_interpolated_series]
+    ax.plot(x, y, z, label='%s_%d' % (one.id, one.year))
+
+    x = [lon for lon, _, _ in two.normalized_interpolated_series]
+    y = [lat for _, lat, _ in two.normalized_interpolated_series]
+    z = [time for _, _, time in two.normalized_interpolated_series]
+    ax.plot(x, y, z, label='%s_%d' % (two.id, two.year))
+    ax.set_xlabel('longitude')
+    ax.set_ylabel('latitude')
+    ax.set_zlabel('time (seconds)')
+
+    ax.legend()
+    plt.show()
+
+    # select two lines in the same spatial cluster but different temporal clusters and plot them
+    one = final_clustering[0][0][2]
+    two = final_clustering[0][1][5]
+    one.time_normalize()
+    two.time_normalize()
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+
+    x = [lon for lon, _, _ in one.normalized_interpolated_series]
+    y = [lat for _, lat, _ in one.normalized_interpolated_series]
+    z = [time for _, _, time in one.normalized_interpolated_series]
+    ax.plot(x, y, z, label='%s_%d' % (one.id, one.year))
+
+    x = [lon for lon, _, _ in two.normalized_interpolated_series]
+    y = [lat for _, lat, _ in two.normalized_interpolated_series]
+    z = [time for _, _, time in two.normalized_interpolated_series]
+    ax.plot(x, y, z, label='%s_%d' % (two.id, two.year))
+    ax.set_xlabel('longitude')
+    ax.set_ylabel('latitude')
+    ax.set_zlabel('time (seconds)')
+
+    ax.legend()
+    plt.show()
+
+    print_clusters(final_clustering)

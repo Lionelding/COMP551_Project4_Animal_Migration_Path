@@ -133,6 +133,10 @@ class TimeSeries(object):
         self.interpolated_series = np.array(interpolated_series)
         self.interpolated_loc_series = extract_lat_and_lon(interpolated_series)
 
+    def time_normalize(self):
+        start_time = self.interpolated_series[0][2]
+        self.normalized_interpolated_series = np.array([[lon, lat, time-start_time] for lon, lat, time in self.interpolated_series])
+
     def __str__(self):
         return self.id + ', ' + pretty_time(self.series[0][2]) + ' - ' + pretty_time(self.series[-1][2])
 

@@ -14,10 +14,11 @@ import matplotlib.pylab as plt
 
 class Plottable(object):
 
-    def __init__(self, x, y, name=None):
+    def __init__(self, x, y, name=None, color=None):
         self.x = x
         self.y = y
         self.name = name
+        self.color = color
 
 def make_plottable(ts, x_idx=0, y_idx=10):
     x, y = [pt[x_idx] for pt in ts], [pt[y_idx] for pt in ts]
@@ -40,15 +41,35 @@ def plot_series(ss, x_idx=0, y_idx=1, variable_length=False):
         plt.plot(plble.x, plble.y)
     plt.show()
 
-def plot(plottables, x_label, y_label, title):
+def plot(plottables, x_label, y_label, title=None, legend=False, color=False, cluster_sizes=None):
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.title(title)
+    if title:
+        plt.title(title)
     if type(plottables) == list:
+        plots = []
         for plottable in plottables:
-            plt.plot(plottable.x, plottable.y, label=plottable.name)
+            if color:
+                plots.append(plt.plot(plottable.x, plottable.y, label=plottable.name, color=plottable.color)[0])
+            else:
+                plots.append(plt.plot(plottable.x, plottable.y, label=plottable.name)[0])
+        if cluster_sizes:
+            # hack
+            handles = []
+            i = 0
+            for size in cluster_sizes:
+                handles.append(plots[i])
+                i += size
+                if i >= len(plots):
+                    break
+            plt.legend(handles=handles,labels=['Cluster 0', 'Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4'])
+        if legend:
+            plt.legend(handles=plots)
     else:
-        plt.plot(plottables.x, plottables.y)
+        if color:
+            plt.plot(plottables.x, plottables.y, color=plottables.color)
+        else:
+            plt.plot(plottables.x, plottables.y, color=plottables.color)
     plt.show()
 
 ################################################################################
