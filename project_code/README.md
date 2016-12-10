@@ -38,6 +38,9 @@ Run with `python run_3.py [source_path]` where `source_path` is the name of the 
 
 ## Hierarchical clustering
 
+### Use `run_hiertree.py` to obtain the results for hierarchical clustering
 
+Run with `python run_hiertree.py`. 
+All functions used for hierarchical clustering are in the file `functions_hiertree.py`.
 
 --------------------------------------------------------------------------------
